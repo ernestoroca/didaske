@@ -7,6 +7,8 @@ var parametros = {
 };
 var eventoNuevoMensaje = null;
 
+rutas = {};
+
 function reload(){
     var lng = parametros.unsuscriber.length;
     for(let i=0;i<lng;i++){

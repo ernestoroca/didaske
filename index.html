@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tutor Online</title>
+    <style>
+.notouch {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+input {
+    autocomplete: "off";
+}
+    </style>
+    <link rel="icon" href="/img/favicon.ico" >
+    <!-- initialize Materializecss -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="estilos.css">
+    <link rel="manifest" href="/manifest.json">
+    <!-- configuracion para apple --> 
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Tutor Online">
+    <link rel="apple-touch-icon" href="/img/icon-36x36.png" sizes="36x36">
+    <link rel="apple-touch-icon" href="/img/icon-48x48.png" sizes="48x48">
+    <link rel="apple-touch-icon" href="/img/icon-57x57.png" sizes="57x57">
+    <link rel="apple-touch-icon" href="/img/icon-60x60.png" sizes="60x60">
+    <link rel="apple-touch-icon" href="/img/icon-72x72.png" sizes="72x72">
+    <link rel="apple-touch-icon" href="/img/icon-76x76.png" sizes="76x76">
+    <link rel="apple-touch-icon" href="/img/icon-96x96.png" sizes="96x96">
+    <link rel="apple-touch-icon" href="/img/icon-114x114.png" sizes="114x114">
+    <link rel="apple-touch-icon" href="/img/icon-120x120.png" sizes="120x120">
+    <link rel="apple-touch-icon" href="/img/icon-144x144.png" sizes="144x144">
+    <link rel="apple-touch-icon" href="/img/icon-152x152.png" sizes="152x152">
+    <link rel="apple-touch-icon" href="/img/icon-180x180.png" sizes="180x180">
+    <link rel="apple-touch-icon" href="/img/icon-192x192.png" sizes="192x192">
+    <!-- librerias firebase -->
+    <script defer src="/__/firebase/7.14.6/firebase-app.js"></script>
+    <script defer src="/__/firebase/7.14.6/firebase-auth.js"></script>
+    <script defer src="/__/firebase/init.js"></script>
+  </head>
+  <body class="yellow lighten-5">
+    <div class="navbar-fixed">
+      <nav>
+        <div class="nav-wrapper orange">
+          <a id="menutitulo" class="brand-logo center notouch"><img src="/img/menututorb.png" height="50"></a>
+        </div>
+      </nav>
+    </div>
+    <div class="container" id="contenedor">
+      <div class="row">
+        <div class="col s12 offset-l2 l8">
+          <div class="carousel carousel-slider center" id="carousel">
+            <div class="carousel-item">
+              <img src="/img/carousel1.jpg" class="responsive-img">
+            </div>
+            <div class="carousel-item">
+              <img src="/img/carousel2.jpg" class="responsive-img">
+            </div>
+            <div class="carousel-item">
+              <img src="/img/carousel3.jpg" class="responsive-img">
+            </div>
+            <div class="carousel-item">
+              <img src="/img/carousel4.jpg" class="responsive-img">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+          <div class="col s12">
+              <a id="google" class="waves-effect waves-light btn white black-text">
+                  <img src="/img/google.png" height="32" style="vertical-align: middle">
+                  <span>  Ingrese con google</span>
+              </a>
+          </div>
+      </div>
+    </div>
+    <script>
+function authinit(){
+  firebase.auth().onAuthStateChanged(usuario => {
+    if(usuario) {
+      showMenu();
+    }
+  });
+  firebase.auth().getRedirectResult().then(result => {
+    if (result && result.user){
+      showMenu();
+    }
+  }).catch(err => {
+    console.log(err);
+  });
+}
+
+function showMenu(){
+    var strHtml = `
+<div class="row">
+  <div class="col s6 m4 l3 z-depth-1">
+    <a href="/coach2coach.html" class="waves-effect waves-light btn">
+      <img class="responsive-img" src="coach2coach.jpg">
+    </a>
+  </div>
+</div>
+<div class="row">
+  <div class="col s6 m4 l3 z-depth-1">
+    <a href="/accountpartner.html" class="waves-effect waves-light btn">
+      <img class="responsive-img" src="accountpartner.jpg">
+    </a>
+  </div>
+</div>
+    `;
+    document.getElementById("contenedor").innerHTML = strHtml;
+}
+window.onload = function(){
+  M.Carousel.init(document.querySelectorAll('.carousel'),{
+    fullWidth: true,
+    indicators: true,
+  });
+  var elCarousel = M.Carousel.getInstance(document.getElementById("carousel"));
+  setTimeout(cambiarCarousel,5000);
+  function cambiarCarousel(){
+    if (document.getElementById("carousel")){
+      elCarousel.next();
+      setTimeout(cambiarCarousel,5000);
+    }
+  }
+  document.getElementById('google').onclick = function(){
+    localStorage.clear();
+    var provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithRedirect(provider);
+  };
+  authinit();
+};
+    </script>
+  </body>
+</html>

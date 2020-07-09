@@ -109,10 +109,17 @@ function authinit(){
       db.collection("misdatos").doc(parametros.uid).get().then(doc => {
         if (doc.exists) {
           parametros.misdatos = doc.data();
+          setMensajeria();
         } else {
-          //TO-DO
+          db.collection("misdatos").doc(parametros.uid).set({
+            token: "",
+            membresia: 0,
+          }).then(res => {
+            setMensajeria();
+          }).catch(err => {
+            console.log(err);
+          });
         }
-        setMensajeria();
         reload();
       });
     } else {

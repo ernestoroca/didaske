@@ -108,16 +108,12 @@ function authinit(){
       var db = parametros.db;
       db.collection("misdatos").doc(parametros.uid).get().then(doc => {
         if (doc.exists) {
-          if (parametros.misdatos === null){
-            parametros.misdatos = doc.data();
-            setMensajeria();
-            reload();
-          } else {
-            parametros.misdatos = doc.data();
-          }
+          parametros.misdatos = doc.data();
         } else {
-            
+          //TO-DO
         }
+        setMensajeria();
+        reload();
       });
     } else {
       window.location.href = "/";  
@@ -129,6 +125,5 @@ window.onload = function(){
     parametros.db = firebase.firestore();
     parametros.funciones = firebase.functions();
     authinit();
-    reload();
     window.onhashchange = reload;
 };

@@ -10,18 +10,18 @@ rutas.menu = function(){
     <h4>Coach 2 Coach</h4>
   </div>
 </div>
-<div class="row" onclick="window.location.href='#coach'">
-  <div class="col s12 z-depth-1">
+<div class="row orange z-depth-2" onclick="window.location.href='#coach'">
+  <div class="col s12 white-text">
     <h5>Coach</h5>
   </div>
 </div>
-<div class="row" onclick="window.location.href='#coachee'">
-  <div class="col s12 z-depth-1">
+<div class="row orange z-depth-2" onclick="window.location.href='#coachee'">
+  <div class="col s12 white-text">
     <h5>Coachee</h5>
   </div>
 </div>
-<div class="row" onclick="window.location.href='#amigos'">
-  <div class="col s12 z-depth-1">
+<div class="row orange z-depth-2" onclick="window.location.href='#amigos'">
+  <div class="col s12 white-text">
     <h5>Mis Amigos</h5>
   </div>
 </div>
@@ -43,7 +43,10 @@ rutas.amigos = function(){
   <div class="col s12">
     <ul class="collapsible">
       <li>
-        <div class="collapsible-header orange"><i class="material-icons">filter_drama</i>Solicitudes</div>
+        <div class="collapsible-header orange white-text">
+          <i class="material-icons">filter_drama</i>
+          <b>Solicitudes</b>
+        </div>
         <div class="collapsible-body">
           <table class="striped">
             <thead>
@@ -59,13 +62,19 @@ rutas.amigos = function(){
         </div>
       </li>
       <li>
-        <div class="collapsible-header orange"><i class="material-icons">place</i>Mis amistades</div>
+        <div class="collapsible-header orange white-text">
+          <i class="material-icons">place</i>
+          <b>Mis amistades</b>
+        </div>
         <div class="collapsible-body">
           <ul class="collection" id="amigos"></ul>
         </div>
       </li>
       <li>
-        <div class="collapsible-header orange"><i class="material-icons">whatshot</i>Nueva amistad</div>
+        <div class="collapsible-header orange white-text">
+          <i class="material-icons">whatshot</i>
+          <b>Nueva amistad</b>
+        </div>
         <div class="collapsible-body">
           <div class="row">
             <div class="input-field col s12">

@@ -97,6 +97,8 @@ rutas.amigos = function(){
     document.getElementById("contenedor").innerHTML = strHtml;
     M.updateTextFields();
     M.Collapsible.init(document.querySelectorAll('.collapsible'));
+
+    var db = parametros.db;
     
     document.getElementById("enviar").onclick = function(){
         var correo = document.getElementById("correo").value;
@@ -141,9 +143,45 @@ rutas.amigos = function(){
     };
     
     document.getElementById("solicitudes").onclick = function(evento){
-        
+        var destino = evento.target;
+        var id = destino.id;
+        while(id === ""){
+            destino = destino.parentElement;
+            id = destino.id;
+        }
+        if (id.includes("aceptar-")){
+            id = id.replace("aceptar-","");
+             db.collection("misdatos").doc(parametros.uid).update({
+                amigos: firebase.firestore.FieldValue.arrayUnion(id),
+            }).then(res => {
+                parametros.misdatos.amigos.push(id);
+            }).catch(err => {
+                console.log(err);
+            });
+
+            db.collection("aceptacion").doc(id).collection('aceptador').doc(parametros.misdatos.email).set({
+                fecha: Date.now(),
+            });
+        } else if (id.includes("rechazar-")){
+            id = id.replace("rechazar-","");
+        } else {
+            return;
+        }
+        db.collection("invitacion").doc(parametros.misdatos.email).collection('invitador').doc(id).delete().then(() => {
+            getSolicitudes();
+        }).catch(function(error) {
+            console.error("Error removing document: ", error);
+        });
     };
     function printSolicitud(correo,dato){
+        if (parametros.misdatos.amigos.indexOf(correo) >= 0){
+            db.collection("invitacion").doc(parametros.misdatos.email).collection('invitador').doc(correo).delete().then(() => {
+                console.log("Document successfully deleted!");
+            }).catch(function(error) {
+                console.error("Error removing document: ", error);
+            });
+            return;
+        }
         var tr = document.createElement("TR");
         var strHtml;
         {strHtml = `
@@ -155,10 +193,18 @@ rutas.amigos = function(){
         document.getElementById("solicitudes").appendChild(tr);
     }
     function getSolicitudes(){
-        var db = parametros.db;
         db.collection("invitacion").doc(parametros.misdatos.email).collection('invitador').get().then(querySnapshot => {
           querySnapshot.forEach(doc => {
             printSolicitud(doc.id,doc.data());
+          });
+        }).catch(function(error) {
+          console.log("Error getting documents: ", error);
+        });
+    }
+    function getAceptaciones(){
+        db.collection("aceptacion").doc(parametros.misdatos.email).collection('aceptador').get().then(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            agregarAmigo(doc.id,doc.data());
           });
         }).catch(function(error) {
           console.log("Error getting documents: ", error);
@@ -168,7 +214,7 @@ rutas.amigos = function(){
     function getAmistades(){
         var lng = parametros.misdatos.amigos.length;
         for(let i=0;i<lng;i++){
-            misAmigos.get(parametros.misdatos.amigos,imprimirAmigo);
+            //misAmigos.get(parametros.misdatos.amigos,imprimirAmigo);
         }
     }
     function imprimirAmigo(datos){
@@ -184,6 +230,8 @@ rutas.amigos = function(){
         document.getElementById("amigos").appendChild(li);
     }
 };
+
+//------------------------------------------------------------------------------------------------------------
 
 rutas.xxx = function(){
     var strHtml;

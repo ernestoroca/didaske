@@ -1,6 +1,177 @@
+"use strict";
+
 rutas = {};
 
 rutas.menu = function(){
+    var strHtml;
+    {strHtml = `
+<div class="row">
+  <div class="col s12">
+    <h4>Coach 2 Coach</h4>
+  </div>
+</div>
+<div class="row" onclick="window.location.href='#coach'">
+  <div class="col s12 z-depth-1">
+    <h5>Coach</h5>
+  </div>
+</div>
+<div class="row" onclick="window.location.href='#coachee'">
+  <div class="col s12 z-depth-1">
+    <h5>Coachee</h5>
+  </div>
+</div>
+<div class="row" onclick="window.location.href='#amigos'">
+  <div class="col s12 z-depth-1">
+    <h5>Mis Amigos</h5>
+  </div>
+</div>
+    `;}
+    document.getElementById("contenedor").innerHTML = strHtml;
+};
+rutas.amigos = function(){
+    var strHtml;
+    {strHtml = `
+<div class="row">
+  <div class="col s12">
+    <h4>Mis Amigos</h4>
+  </div>
+</div>
+<div class="row">
+  <div class="col s12">
+    <ul class="collapsible">
+      <li>
+        <div class="collapsible-header"><i class="material-icons">filter_drama</i>Solicitudes</div>
+        <div class="collapsible-body">
+          <table class="striped">
+            <thead>
+              <tr>
+                <th>Correo</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="solicitudes">
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>
+        <div class="collapsible-header"><i class="material-icons">place</i>Mis amistades</div>
+        <div class="collapsible-body">
+          <ul class="collection" id="amigos"></ul>
+        </div>
+      </li>
+      <li>
+        <div class="collapsible-header"><i class="material-icons">whatshot</i>Nueva amistad</div>
+        <div class="collapsible-body">
+          <div class="row">
+            <div class="input-field col s12">
+              <i class="material-icons prefix">account_circle</i>
+              <input id="correo" type="email" class="validate">
+              <label for="correo">Gmail</label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col s12">
+              <a id="enviar" class="waves-effect waves-light btn right"><i class="material-icons left">send</i>Enviar</a>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+    `;}
+    document.getElementById("contenedor").innerHTML = strHtml;
+    M.updateTextFields();
+    
+    document.getElementById("enviar").onclick = function(){
+        var correo = document.getElementById("correo").value;
+        correo = correo.trim();
+        if (value === ""){
+            return;
+        }
+        correo = correo.toLowerCase();
+        var vcorreo = correo.split("@");
+        if (vcorreo.length !== 2){
+            return;
+        }
+        var cuenta = vcorreo[0];
+        if (vcorreo[1] !== "gmail.com"){
+            return;
+        }
+        
+        if (parametros.misdatos.invite.indexOf(correo)>=0){
+            return;
+        }
+        
+        var db = parametros.db;
+        db.collection("correo").doc(correo).get().then(doc => {
+            if (doc.exists) {
+                return db.collection("invitacion").doc(correo).collection('invitador').doc(parametros.misdatos.email).set({
+                    fecha: Date.now(),
+                });
+            } else {
+                throw "Esta persona no es miembro de Didaske. ¡Invitala!";
+            }
+        }).then(res => {
+            return db.collection("misdatos").doc(parametros.uid).update({
+                invite: firebase.firestore.FieldValue.arrayUnion(correo),
+            });
+        }).then(res => {
+            M.toast({html: "Solicitud enviada"});
+            reload();
+        }).catch(function(error){
+            M.toast({html: error});
+        });
+    };
+    
+    document.getElementById("solicitudes").onclick = function(evento){
+        
+    };
+    function printSolicitud(correo,dato){
+        var tr = document.createElement("TR");
+        var strHtml;
+        {strHtml = `
+<td>${correo}</td>
+<td><a id="aceptar-${correo}" class="waves-effect waves-teal btn-flat"><i class="material-icons right">check</i></a></td>
+<td><a id="rechazar-${correo}" class="waves-effect waves-red btn-flat"><i class="material-icons right">delete</i></a></td>
+        `;}
+        tr.innerHTML = strHtml;
+        document.getElementById("solicitudes").appendChild(tr);
+    }
+    function getSolicitudes(){
+        var db = parametros.db;
+        db.collection("invitacion").doc(parametros.misdatos.email).collection('invitador').get().then(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            printSolicitud(doc.id,doc.data());
+          });
+        }).catch(function(error) {
+          console.log("Error getting documents: ", error);
+        });
+    }
+    
+    function getAmistades(){
+        var lng = parametros.misdatos.amigos.length;
+        for(let i=0;i<lng;i++){
+            misAmigos.get(parametros.misdatos.amigos,imprimirAmigo);
+        }
+    }
+    function imprimirAmigo(datos){
+        var li = document.createElement("LI");
+        li.classList.add("collection-item","avatar");
+        var strHtml;
+        {strHtml = `
+<img src="${datos.foto}" alt="" class="circle">
+<span class="title">${datos.nombre} + ${datos.apellido}</span>
+<a id="borrar-${datos.id}" class="secondary-content"><i class="material-icons">trash</i></a>
+        `;}
+        li.innerHTML = strHtml;
+        document.getElementById("amigos").appendChild(li);
+    }
+};
+
+rutas.xxx = function(){
     var strHtml;
     {strHtml= `
 <video id="localVideo" width="320" height="240" muted autoplay playsinline></video>

@@ -28,6 +28,9 @@ rutas.menu = function(){
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
 };
+
+//---------------------------------------------------------------------------------------------------------------
+
 rutas.amigos = function(){
     var strHtml;
     {strHtml = `
@@ -88,7 +91,7 @@ rutas.amigos = function(){
     document.getElementById("enviar").onclick = function(){
         var correo = document.getElementById("correo").value;
         correo = correo.trim();
-        if (value === ""){
+        if (correo === ""){
             return;
         }
         correo = correo.toLowerCase();
@@ -96,7 +99,6 @@ rutas.amigos = function(){
         if (vcorreo.length !== 2){
             return;
         }
-        var cuenta = vcorreo[0];
         if (vcorreo[1] !== "gmail.com"){
             return;
         }
@@ -105,6 +107,7 @@ rutas.amigos = function(){
             return;
         }
         
+        document.getElementById("correo").value = "";
         var db = parametros.db;
         db.collection("correo").doc(correo).get().then(doc => {
             if (doc.exists) {
@@ -119,8 +122,9 @@ rutas.amigos = function(){
                 invite: firebase.firestore.FieldValue.arrayUnion(correo),
             });
         }).then(res => {
+            parametros.misdatos.invite.push(correo);
+            localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
             M.toast({html: "Solicitud enviada"});
-            reload();
         }).catch(function(error){
             M.toast({html: error});
         });

@@ -1,4 +1,5 @@
 "use strict";
+/*global M, firebase*/
 
 var parametros = {
   unsuscriber: [],
@@ -159,7 +160,7 @@ function actualizarMisDatos(usuario,cb){
     if (doc.exists) {
       var datos = doc.data();
       parametros.misdatos = datos;
-      paremetros.misdatos.email = usuario.email;
+      parametros.misdatos.email = usuario.email;
       parametros.misdatos.timeout = Date.now()+24*60*60*1000;
       localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
       cb();
@@ -171,7 +172,7 @@ function actualizarMisDatos(usuario,cb){
       };
       db.collection("misdatos").doc(parametros.uid).set(misdatos).then(res => {
         parametros.misdatos = misdatos;
-        paremetros.misdatos.email = usuario.email;
+        parametros.misdatos.email = usuario.email;
         parametros.misdatos.timeout = Date.now()+24*60*60*1000;
         localStorage.setItem('misdatos',JSON.stringify(misdatos));
         cb();

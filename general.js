@@ -174,7 +174,7 @@ function actualizarMisDatos(usuario,cb){
         parametros.misdatos = misdatos;
         parametros.misdatos.email = usuario.email;
         parametros.misdatos.timeout = Date.now()+24*60*60*1000;
-        localStorage.setItem('misdatos',JSON.stringify(misdatos));
+        localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
         cb();
       }).catch(err => {
         console.log(err);

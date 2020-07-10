@@ -101,29 +101,99 @@ function setMensajeria(){
     });
 }
 
+function actualizarCorreo(usuario){
+  var tmpstr = localStorage.getItem('micorreo');
+  if (tmpstr){
+    var tmp = parseInt(tmpstr,10);
+    var ahora = Date.now();
+    if (tmp >= ahora){
+      return;
+    }
+  }
+  var db = parametros.db;
+  db.collection("correo").doc(usuario.email).get().then(doc => {
+    if (doc.exists) {
+      var datos = doc.data();
+      if(datos.displayName !== usuario.displayName || datos.photoURL !== usuario.photoURL){
+        db.collection("correo").doc(usuario.email).update({
+          displayName: usuario.displayName,
+          photoURL: usuario.photoURL,
+        }).then(res => {
+          localStorage.setItem('micorreo',Date.now()+24*60*60*1000);
+        }).catch(err => {
+          console.log(err);
+        });
+      } else {
+        localStorage.setItem('micorreo',Date.now()+24*60*60*1000);
+      }
+    } else {
+      db.collection("correo").doc(usuario.email).set({
+        displayName: usuario.displayName,
+        photoURL: usuario.photoURL,
+      }).then(res => {
+        localStorage.setItem('micorreo',Date.now()+24*60*60*1000);
+      }).catch(err => {
+        console.log(err);
+      });
+    }
+  }).catch(err => {
+    console.log(err);
+  });
+}
+
+function actualizarMisDatos(usuario,cb){
+  var datstr = localStorage.getItem('misdatos');
+  if (datstr){
+    var misdatos = JSON.parse(datstr);
+    var ahora = Date.now();
+    if (misdatos.timeout >= ahora){
+      parametros.misdatos = misdatos;
+      cb();
+      return;
+    }
+  }
+  var db = parametros.db;
+  db.collection("misdatos").doc(parametros.uid).get().then(doc => {
+    if (doc.exists) {
+      var datos = doc.data();
+      parametros.misdatos = datos;
+      paremetros.misdatos.email = usuario.email;
+      parametros.misdatos.timeout = Date.now()+24*60*60*1000;
+      localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
+      cb();
+    } else {
+      var misdatos = {
+        token: "",
+        invite: [],
+        amigos: [],
+      };
+      db.collection("misdatos").doc(parametros.uid).set(misdatos).then(res => {
+        parametros.misdatos = misdatos;
+        paremetros.misdatos.email = usuario.email;
+        parametros.misdatos.timeout = Date.now()+24*60*60*1000;
+        localStorage.setItem('misdatos',JSON.stringify(misdatos));
+        cb();
+      }).catch(err => {
+        console.log(err);
+      });
+    }
+  }).catch(err => {
+    console.log(err);
+  });
+}
+
 function authinit(){
   firebase.auth().onAuthStateChanged(function(usuario) {
     if (usuario) {
-      parametros.uid = firebase.auth().currentUser.uid;
-      var db = parametros.db;
-      db.collection("misdatos").doc(parametros.uid).get().then(doc => {
-        if (doc.exists) {
-          parametros.misdatos = doc.data();
-          setMensajeria();
-        } else {
-          db.collection("misdatos").doc(parametros.uid).set({
-            token: "",
-            membresia: 0,
-          }).then(res => {
-            setMensajeria();
-          }).catch(err => {
-            console.log(err);
-          });
-        }
+      parametros.uid = usuario.uid;
+      actualizarCorreo(usuario);
+      actualizarMisDatos(usuario,function(){
+        setMensajeria();
         reload();
       });
+      var db = parametros.db;
     } else {
-      window.location.href = "/";  
+      window.location.href = "/";
     }
   });
 }

@@ -87,6 +87,7 @@ rutas.amigos = function(){
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
     M.updateTextFields();
+    M.Collapsible.init(document.querySelectorAll('.collapsible'));
     
     document.getElementById("enviar").onclick = function(){
         var correo = document.getElementById("correo").value;

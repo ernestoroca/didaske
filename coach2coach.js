@@ -43,7 +43,7 @@ rutas.amigos = function(){
   <div class="col s12">
     <ul class="collapsible">
       <li>
-        <div class="collapsible-header"><i class="material-icons">filter_drama</i>Solicitudes</div>
+        <div class="collapsible-header orange"><i class="material-icons">filter_drama</i>Solicitudes</div>
         <div class="collapsible-body">
           <table class="striped">
             <thead>
@@ -59,13 +59,13 @@ rutas.amigos = function(){
         </div>
       </li>
       <li>
-        <div class="collapsible-header"><i class="material-icons">place</i>Mis amistades</div>
+        <div class="collapsible-header orange"><i class="material-icons">place</i>Mis amistades</div>
         <div class="collapsible-body">
           <ul class="collection" id="amigos"></ul>
         </div>
       </li>
       <li>
-        <div class="collapsible-header"><i class="material-icons">whatshot</i>Nueva amistad</div>
+        <div class="collapsible-header orange"><i class="material-icons">whatshot</i>Nueva amistad</div>
         <div class="collapsible-body">
           <div class="row">
             <div class="input-field col s12">
@@ -76,7 +76,7 @@ rutas.amigos = function(){
           </div>
           <div class="row">
             <div class="col s12">
-              <a id="enviar" class="waves-effect waves-light btn right"><i class="material-icons left">send</i>Enviar</a>
+              <a id="enviar" class="waves-effect waves-light btn right orange"><i class="material-icons left">send</i>Enviar</a>
             </div>
           </div>
         </div>

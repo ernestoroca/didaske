@@ -245,6 +245,10 @@ rutas.amigos = function(){
                 amigos: firebase.firestore.FieldValue.arrayUnion(correo),
             }).then(res => {
                 parametros.misdatos.amigos.push(correo);
+                var pos = parametros.misdatos.invite.indexOf(correo);
+                if (pos>=0){
+                    parametros.misdatos.invite.splice(pos,1);
+                }
                 localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
             }).catch(err => {
                 console.log(err);
@@ -274,7 +278,9 @@ rutas.amigos = function(){
                 amigos: firebase.firestore.FieldValue.arrayRemove(correo),
             }).then(res => {
                 var pos = parametros.misdatos.amigos.indexOf(correo);
-                parametros.misdatos.amigos.splice(1,0);
+                if (pos>=0){
+                    parametros.misdatos.amigos.splice(1,0);
+                }
                 localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
             }).catch(err => {
                 console.log(err);
@@ -340,10 +346,25 @@ rutas.amigos = function(){
         }
     };
     function getAmistades(){
+        var guardar = false;
         document.getElementById("amistades").innerHTML = "";
         var lng = parametros.misdatos.amigos.length;
         for(let i=0;i<lng;i++){
             datosAmigo(parametros.misdatos.amigos[i],imprimirAmigo);
+            var pos = parametros.misdatos.invite.indexOf(parametros.misdatos.amigos[i]);
+            if (pos>=0){
+                parametros.misdatos.invite.splice(pos,1);
+                guardar = true;
+            }
+        }
+        if(guardar){
+            db.collection("misdatos").doc(parametros.uid).update({
+                invite: parametros.misdatos.invite,
+            }).then(res => {
+                localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
+            }).catch(err => {
+                console.log(err);
+            });
         }
     }
     function imprimirAmigo(datos){

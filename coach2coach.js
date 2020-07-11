@@ -118,7 +118,7 @@ rutas.amigos = function(){
     </ul>
   </div>
 </div>
-div id="modal1" class="modal">
+<div id="modal1" class="modal">
   <div class="modal-content">
     <h4>Borrar Amigo</h4>
     <p>¿Está seguro de querer eliminar este amigo?</p>

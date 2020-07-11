@@ -1,5 +1,30 @@
 "use strict";
 
+function datosAmigo(correo,cb){
+    var datoStr = localStorage.getItem('datosAmigo-'+correo);
+    if (datoStr !== null){
+        var ahora = Date.now();
+        var dato = JSON.parse(datoStr);
+        if (dato.timeout >= ahora){
+            cb(dato);
+            return;
+        }
+        localStorage.removeItem('datosAmigo-'+correo);
+    }
+    var db = parametros.db;
+    db.collection("correo").doc(correo).get().then(function(doc) {
+        var datos = doc.data();
+        datos.correo = correo;
+        datos.timeout = Date.now() + 7*24*60*60*1000;
+        localStorage.setItem('datosAmigo-'+correo,JSON.stringify(datos));
+        cb(datos);
+    }).catch(function(error) {
+        console.log(error);
+    });
+}
+
+//------------------------------------------------------------------------------------------------------
+
 rutas = {};
 
 rutas.menu = function(){
@@ -93,10 +118,21 @@ rutas.amigos = function(){
     </ul>
   </div>
 </div>
+div id="modal1" class="modal">
+  <div class="modal-content">
+    <h4>Borrar Amigo</h4>
+    <p>¿Está seguro de querer eliminar este amigo?</p>
+  </div>
+  <div class="modal-footer">
+    <a class="modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    <a id="borrar" class="modal-close waves-effect waves-green btn-flat orange">BORRAR</a>
+  </div>
+</div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
     M.updateTextFields();
     M.Collapsible.init(document.querySelectorAll('.collapsible'));
+    M.Modal.init(document.querySelectorAll('.modal'));
 
     var db = parametros.db;
     
@@ -151,10 +187,11 @@ rutas.amigos = function(){
         }
         if (id.includes("aceptar-")){
             id = id.replace("aceptar-","");
-             db.collection("misdatos").doc(parametros.uid).update({
+            db.collection("misdatos").doc(parametros.uid).update({
                 amigos: firebase.firestore.FieldValue.arrayUnion(id),
             }).then(res => {
                 parametros.misdatos.amigos.push(id);
+                localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
             }).catch(err => {
                 console.log(err);
             });
@@ -193,6 +230,7 @@ rutas.amigos = function(){
         document.getElementById("solicitudes").appendChild(tr);
     }
     function getSolicitudes(){
+        document.getElementById("solicitudes").innerHTML = "";
         db.collection("invitacion").doc(parametros.misdatos.email).collection('invitador').get().then(querySnapshot => {
           querySnapshot.forEach(doc => {
             printSolicitud(doc.id,doc.data());
@@ -201,20 +239,111 @@ rutas.amigos = function(){
           console.log("Error getting documents: ", error);
         });
     }
+    function agregarAmigo(correo,dato){
+        if (parametros.misdatos.amigos.indexOf(correo)<0){
+            db.collection("misdatos").doc(parametros.uid).update({
+                amigos: firebase.firestore.FieldValue.arrayUnion(correo),
+            }).then(res => {
+                parametros.misdatos.amigos.push(correo);
+                localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+        db.collection("invitacion").doc(parametros.misdatos.email).collection('invitador').doc(correo).delete().then(() => {
+        }).catch(function(error) {
+            console.error("Error removing document: ", error);
+        });
+    }
     function getAceptaciones(){
+        var handler = null;
         db.collection("aceptacion").doc(parametros.misdatos.email).collection('aceptador').get().then(querySnapshot => {
           querySnapshot.forEach(doc => {
             agregarAmigo(doc.id,doc.data());
+            if (handler === null){
+                handler = setTimeout(getAmistades,5000);
+            }
           });
         }).catch(function(error) {
           console.log("Error getting documents: ", error);
         });
     }
+    function anularAmigo(correo,dato){
+        if (parametros.misdatos.amigos.indexOf(correo) >= 0){
+            db.collection("misdatos").doc(parametros.uid).update({
+                amigos: firebase.firestore.FieldValue.arrayRemove(correo),
+            }).then(res => {
+                var pos = parametros.misdatos.amigos.indexOf(correo);
+                parametros.misdatos.amigos.splice(1,0);
+                localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+        db.collection("anulacion").doc(parametros.misdatos.email).collection('anulador').doc(correo).delete().then(() => {
+        }).catch(function(error) {
+            console.error("Error removing document: ", error);
+        });
+    }
+    function getAnulaciones(){
+        var handler = null;
+        db.collection("anulacion").doc(parametros.misdatos.email).collection('anulador').get().then(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            anularAmigo(doc.id,doc.data());
+            if (handler === null){
+                handler = setTimeout(getAmistades,5000);
+            }
+          });
+        }).catch(function(error) {
+          console.log("Error getting documents: ", error);
+        });
+    }
+    getAnulaciones();
+    getSolicitudes();
+    getAceptaciones();
     
+    var correoBorrar = "";
+    document.getElementById("borrar").onclick = function(){
+        if(correoBorrar === ""){
+            return;
+        }
+        var elCorreo = correoBorrar.slice();
+        correoBorrar = "";
+        if (parametros.misdatos.amigos.indexOf(elCorreo)>=0){
+            db.collection("misdatos").doc(parametros.uid).update({
+                amigos: firebase.firestore.FieldValue.arrayRemove(elCorreo),
+            }).then(res => {
+                var pos = parametros.misdatos.amigos.indexOf(elCorreo);
+                parametros.misdatos.amigos.splice(pos,1);
+                localStorage.setItem('misdatos',JSON.stringify(parametros.misdatos));
+                getAmistades();
+            }).catch(err => {
+                console.log(err);
+            });
+            
+            db.collection("anulacion").doc(elCorreo).collection('anulador').doc(parametros.misdatos.email).set({
+                fecha: Date.now(),
+            });
+        }
+    };
+    document.getElementById("amigos").onclick = function(evento){
+        var destino = evento.target;
+        var id = destino.id;
+        while(id === ""){
+            destino = destino.parentElement;
+            id = destino.id;
+        }
+        if (id.includes("borrar-")){
+            id = id.replace("borrar-","");
+            M.Modal.getInstance("modal1").open();
+            correoBorrar = id;
+        }
+    };
     function getAmistades(){
+        document.getElementById("amistades").innerHTML = "";
         var lng = parametros.misdatos.amigos.length;
         for(let i=0;i<lng;i++){
-            //misAmigos.get(parametros.misdatos.amigos,imprimirAmigo);
+            datosAmigo(parametros.misdatos.amigos[i],imprimirAmigo);
         }
     }
     function imprimirAmigo(datos){
@@ -222,9 +351,10 @@ rutas.amigos = function(){
         li.classList.add("collection-item","avatar");
         var strHtml;
         {strHtml = `
-<img src="${datos.foto}" alt="" class="circle">
-<span class="title">${datos.nombre} + ${datos.apellido}</span>
-<a id="borrar-${datos.id}" class="secondary-content"><i class="material-icons">trash</i></a>
+<img src="${datos.photoURL}" alt="" class="circle">
+<span class="title">${datos.displayName}</span>
+<p>${datos.correo}<p>
+<a id="borrar-${datos.correo}" class="secondary-content"><i class="material-icons">trash</i></a>
         `;}
         li.innerHTML = strHtml;
         document.getElementById("amigos").appendChild(li);

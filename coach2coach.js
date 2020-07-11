@@ -92,7 +92,7 @@ rutas.amigos = function(){
           <b>Mis amistades</b>
         </div>
         <div class="collapsible-body">
-          <ul class="collection" id="amigos"></ul>
+          <ul class="collection" id="amistades"></ul>
         </div>
       </li>
       <li>
@@ -326,7 +326,7 @@ rutas.amigos = function(){
             });
         }
     };
-    document.getElementById("amigos").onclick = function(evento){
+    document.getElementById("amistades").onclick = function(evento){
         var destino = evento.target;
         var id = destino.id;
         while(id === ""){
@@ -348,17 +348,18 @@ rutas.amigos = function(){
     }
     function imprimirAmigo(datos){
         var li = document.createElement("LI");
-        li.classList.add("collection-item","avatar");
+        li.classList.add("collection-item","avatar","orange","lighten-4");
         var strHtml;
         {strHtml = `
 <img src="${datos.photoURL}" alt="" class="circle">
 <span class="title">${datos.displayName}</span>
 <p>${datos.correo}<p>
-<a id="borrar-${datos.correo}" class="secondary-content"><i class="material-icons">trash</i></a>
+<a id="borrar-${datos.correo}" class="secondary-content"><i class="material-icons green-text">delete</i></a>
         `;}
         li.innerHTML = strHtml;
-        document.getElementById("amigos").appendChild(li);
+        document.getElementById("amistades").appendChild(li);
     }
+    getAmistades();
 };
 
 //------------------------------------------------------------------------------------------------------------

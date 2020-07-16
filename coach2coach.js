@@ -1,5 +1,10 @@
 "use strict";
 
+var escuchadores = [];
+var peerConnection;
+var roomId;
+var remoteStream;
+
 function datosAmigo(correo,cb){
     var datoStr = localStorage.getItem('datosAmigo-'+correo);
     if (datoStr !== null){
@@ -21,6 +26,52 @@ function datosAmigo(correo,cb){
     }).catch(function(error) {
         console.log(error);
     });
+}
+
+async function hangUp() {
+    if (remoteStream) {
+        remoteStream.getTracks().forEach(track => track.stop());
+        remoteStream = null;
+    }
+    
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    
+    // Delete room on hangup
+    if (roomId) {
+        const db = firebase.firestore();
+        const roomRef = db.collection('rooms').doc(roomId);
+        const calleeCandidates = await roomRef.collection('calleeCandidates').get();
+        calleeCandidates.forEach(async candidate => {
+            await candidate.ref.delete();
+        });
+        const callerCandidates = await roomRef.collection('callerCandidates').get();
+        callerCandidates.forEach(async candidate => {
+            await candidate.ref.delete();
+        });
+        await roomRef.delete();
+        roomId = null;
+    }
+    if (escuchadores.length>0){
+        let lng = escuchadores.length;
+        for(let i=0;i<lng;i++){
+            escuchadores[i]();
+        }
+        escuchadores = [];
+    }
+    db.collection("publica").doc(parametros.misdatos.email).delete().then(res => {
+    }).catch(err => {
+        console.log(err);
+    });
+    if (localStorage.getItem("invitado") !== null){
+        db.collection("directa").doc(localStorage.getItem("invitado")).collection("invitador").doc(parametros.misdatos.email).delete().then(res => {
+            localStorage.removeItem("invitado");
+        }).catch(err => {
+            console.log(err);
+        });
+    }
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -583,8 +634,19 @@ rutas.coachee = function(){
         if (querySnapshot.empty){
             buscarPublicas();
         } else {
+            var lngDoc  = querySnapshot.size;
+            var contador = 0;
+            var buscar = true;
             querySnapshot.forEach(doc => {
-                datosAmigo(doc.id,imprimirDirecta);
+                var datos = doc.data();
+                if (datos.sala === ""){
+                    datosAmigo(doc.id,imprimirDirecta);
+                    buscar = false;
+                }
+                contador++;
+                if (buscar && contador === lngDoc){
+                    buscarPublicas();
+                }
             });
         }
     }).catch(function(error) {
@@ -639,10 +701,11 @@ rutas.coachee = function(){
 
 rutas.setsala = function(vecUrl){
     var coach = vecUrl[1];
+    var tipo = vecUrl[2];
     
-    var strHtml;
+    var strHtml, roomRef,refDoc,localStream;
+    var db = parametros.db;
     {strHtml= `
-<video id="localVideo" width="320" height="240" muted autoplay playsinline style="display:none"></video>
 <div class="row">
   <div class="col s12">
     <h4 id="estado">Esperando al Coach</h4>
@@ -654,12 +717,12 @@ rutas.setsala = function(vecUrl){
   </div>
   <div class="col s8">
     <p id="displayName"></p>
-    <p>${correo}</p>
+    <p>${coach}</p>
   </div>
 </div>
 <div class="row">
   <div class="col s12">
-    <p id="mensaje"></p>
+    <h4 id="mensaje"></h4>
   </div>
 </div>
 <div class="row">
@@ -669,13 +732,12 @@ rutas.setsala = function(vecUrl){
 </div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
-    datosAmigo(correo,imprimirPersona);
+    datosAmigo(coach,imprimirPersona);
     function imprimirPersona(datos){
         document.getElementById("displayName").innerHTML = datos.displayName;
         document.getElementById("photoURL").src = datos.photoURL;
     }
     
-    var localStream;
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
         navigator.mediaDevices.getUserMedia({video: false, audio: true}).then((stream) => {localStream = stream});
     } else {
@@ -686,42 +748,62 @@ rutas.setsala = function(vecUrl){
         return;
     }
     
-    var db = parametros.db;
-    if (vecUrl[2] === "directa"){
-        db.collection("directa").doc(parametros.misdatos.email).collection("invitador").doc(coach).get().then(doc => {
-            if (doc.exists) {
-                var data = doc.data();
-                if (data.sala !=""){
-                    M.toast({
-                        html: "Ya no existe la reunión.",
-                        completeCallback: function(){window.location.href="#menu";},
-                    });
-                } else {
-                    createRoom();
-                }
-            } else {
+    
+    if (tipo === "directa"){
+        refDoc = db.collection("directa").doc(parametros.misdatos.email).collection("invitador").doc(coach);
+    } else {
+        refDoc = db.collection("publica").doc(coach);
+    }
+    refDoc.get().then(doc => {
+        if (doc.exists) {
+            var data = doc.data();
+            if (data.sala !=""){
                 M.toast({
                     html: "Ya no existe la reunión.",
                     completeCallback: function(){window.location.href="#menu";},
                 });
+            } else {
+                createRoom();
             }
-        }).catch(err => {
-            
+        } else {
+            M.toast({
+                html: "Ya no existe la reunión.",
+                completeCallback: function(){window.location.href="#menu";},
+            });
+        }
+    }).catch(err => {
+        console.log(err);
+        M.toast({
+            html: "Ya no existe la reunión.",
+            completeCallback: function(){window.location.href="#menu";},
         });
-    } else {//publica
-        
+    });
+    
+    function informarSala(salaid){
+        refDoc.update({
+            sala: salaid
+        }).then(res => {
+            M.toast({html: "Conexión establecida"});
+        }).catch(err => {
+            console.log(err);
+        });
     }
-    openUserMedia();
     
+    function imprimirMensaje(mensaje){
+        document.getElementById("mensaje").innterHTML = mensaje;
+    }
     
-    var roomId; //???????????
-    
-    
-    
-    
-    function createRoom() {//async function createRoom() {
-        const db = firebase.firestore();
-        const roomRef = db.collection('rooms').doc(); //const roomRef = await db.collection('rooms').doc();
+    async function createRoom() {
+        const configuration = {
+            iceServers: [{
+                urls: [
+                    'stun:stun1.l.google.com:19302',
+                    'stun:stun2.l.google.com:19302',
+                ]
+            }],
+            iceCandidatePoolSize: 10,
+        };
+        roomRef = await db.collection('rooms').doc();
         peerConnection = new RTCPeerConnection(configuration);
         peerConnection.onconnectionstatechange= function(evento){
             if (peerConnection.connectionState == "connected"){
@@ -744,139 +826,95 @@ rutas.setsala = function(vecUrl){
         // Code for collecting ICE candidates above
         
         // Code for creating a room below
-        const offer = peerConnection.createOffer(); //const offer = await peerConnection.createOffer();
-        peerConnection.setLocalDescription(offer); //await peerConnection.setLocalDescription(offer);
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
         const roomWithOffer = {
             'offer': {
                 type: offer.type,
                 sdp: offer.sdp,
             },
+            'mansaje': "",
+            'correo': parametros.misdatos.email,
         };
-        roomRef.set(roomWithOffer); //await roomRef.set(roomWithOffer);
-        roomId = roomRef.id;
-        document.getElementById("room-id-out").innerHTML = roomId;//??????????????????????????????
+        await roomRef.set(roomWithOffer);
         // Code for creating a room above
-        
-        // Code ?????????????? below
-        peerConnection.addEventListener('track', event => {
-            event.streams[0].getTracks().forEach(track => {
-                remoteStream.addTrack(track);
-            });
-        });
-        // Code ?????????????? above
     
         // Listening for remote session description below
-        roomRef.onSnapshot(snapshot => { //roomRef.onSnapshot(async snapshot => {
+        var escuchador = roomRef.onSnapshot(async snapshot => {
             const data = snapshot.data();
             if (!peerConnection.currentRemoteDescription && data && data.answer) {
                 const rtcSessionDescription = new RTCSessionDescription(data.answer);
-                peerConnection.setRemoteDescription(rtcSessionDescription); //await peerConnection.setRemoteDescription(rtcSessionDescription);
+                await peerConnection.setRemoteDescription(rtcSessionDescription);
+                imprimirMensaje(data.mensaje);
             }
         });
+        escuchadores.push(escuchador);
         // Listening for remote session description above
     
         // Listen for remote ICE candidates below
-        roomRef.collection('calleeCandidates').onSnapshot(snapshot => {
-            snapshot.docChanges().forEach(change => { //snapshot.docChanges().forEach(async change => {
+        escuchador = roomRef.collection('calleeCandidates').onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(async change => {
                 if (change.type === 'added') {
                     let data = change.doc.data();
-                    peerConnection.addIceCandidate(new RTCIceCandidate(data)); //await peerConnection.addIceCandidate(new RTCIceCandidate(data));
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(data));
                 }
             });
         });
+        escuchadores.push(escuchador);
         // Listen for remote ICE candidates above
+        
+        //send ID to the other party
+        informarSala(roomRef.id);
     }
 };
 
 //------------------------------------------------------------------------------------------------------------
 
 rutas.sala = function(vecUrl){
-    var sala = vecUrl[1];
+    var roomId = vecUrl[1];
+    var roomRef, roomSnapshot,peerConnection;
+    var db = firebase.firestore();
+    remoteStream = new MediaStream();
     
-    var strHtml;
-    {strHtml= `
-<video id="localVideo" width="320" height="240" muted autoplay playsinline></video>
-<video id="remoteVideo" width="320" height="240" autoplay playsinline></video><br>
-<button id="open-camera">Mostrar Camara</button><br><br>
-<button id="create-room">Crear Sala</button>
-<b>Room Id:</b> <span id="room-id-out"></span><br><br><b>
-<input id="room-id-in" type="text">
-<button id="join-room">Ingresar Sala</button><br><br>
-<button id="close-room">Salir Sala</button><br>
-<div id="msg-list"></div>
-<input id="msg" type="text">
-<button id="send-msg">Mensaje</button><br><br>
-    `;}
+    var strHtml = `
+<div class="row">
+  <div class="col s4">
+    <img class="responsive-img" src="" id="photoURL">
+  </div>
+  <div class="col s8">
+    <p id="displayName"></p>
+    <p id="correo"></p>
+  </div>
+</div>
+    `;
     document.getElementById("contenedor").innerHTML = strHtml;
-  
-    const configuration = {
-        iceServers: [{
-            urls: [
-                'stun:stun1.l.google.com:19302',
-                'stun:stun2.l.google.com:19302',
-            ]
-        }],
-        iceCandidatePoolSize: 10,
-    };
-
-    let peerConnection = null;
     
-    let remoteStream = null;
-    let roomId = null;
-    let chatChannel = null;
-
-    function showChatMessage(msg){
-        var p = document.createElement("P");
-        p.innerHTML = "<b>" + msg + "</b>";
-        document.getElementById("msg-list").appendChild(p);
+    function enviarMensaje(mensaje){
+        roomRef.update({
+            mensaje: mensaje,
+        });
     }
-
-    document.getElementById("send-msg").onclick = function(){
-        var msg = document.getElementById("msg").value;
-        msg = msg.trim();
-        document.getElementById("msg").value = "";
-        if (msg === "" || chatChannel === null){
-            return;
-        }
-        chatChannel.send(msg);
-        var p = document.createElement("P");
-        p.innerHTML = msg;
-        document.getElementById("msg-list").appendChild(p);
-    };
-
+    function imprimirCoach(datos){
+        document.getElementById("photoURL").src = datos.photoURL;
+        document.getElementById("displayName").innerHTML = datos.displayName;
+        document.getElementById("correo").src = datos.correo;
+    }
     
-
     async function joinRoomById() {
-        var roomId = document.getElementById("room-id-in").value;
-        
-        const db = firebase.firestore();
-        const roomRef = db.collection('rooms').doc(`${roomId}`);
-        const roomSnapshot = await roomRef.get();
-        
+        const configuration = {
+            iceServers: [{
+                urls: [
+                    'stun:stun1.l.google.com:19302',
+                    'stun:stun2.l.google.com:19302',
+                ]
+            }],
+            iceCandidatePoolSize: 10,
+        };
+        roomRef = db.collection('rooms').doc(`${roomId}`);
+        roomSnapshot = await roomRef.get();
         if (roomSnapshot.exists) {
             peerConnection = new RTCPeerConnection(configuration);
             
-            peerConnection.onconnectionstatechange= function(evento){
-                if (peerConnection.connectionState == "connected"){
-                    // Create Chat channel below
-                    peerConnection.ondatachannel = function(event) {
-                        chatChannel = event.channel;
-                        chatChannel.onopen = function(event) {
-                            chatChannel.send('Hi back!');
-                        }
-                        chatChannel.onmessage = function(event) {
-                            showChatMessage(event.data);
-                        }
-                    }
-                    // Create Chat channel above
-                }
-            };
-    
-            
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-    
             // Code for collecting ICE candidates below
             const calleeCandidatesCollection = roomRef.collection('calleeCandidates');
             peerConnection.addEventListener('icecandidate', event => {
@@ -887,16 +925,18 @@ rutas.sala = function(vecUrl){
             });
             // Code for collecting ICE candidates above
             
-            // Code ?????????????? below
+            // Code remoteStream below
             peerConnection.addEventListener('track', event => {
                 event.streams[0].getTracks().forEach(track => {
                     remoteStream.addTrack(track);
                 });
             });
-            // Code ?????????????? above
+            // Code remoteStream above
             
             // Code for creating SDP answer below
-            const offer = roomSnapshot.data().offer;
+            const snapData = roomSnapshot.data();
+            const offer = snapData.offer;
+            datosAmigo(snapData.correo,imprimirCoach);
             await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
@@ -910,7 +950,7 @@ rutas.sala = function(vecUrl){
             // Code for creating SDP answer above
     
             // Listening for remote ICE candidates below
-            roomRef.collection('callerCandidates').onSnapshot(snapshot => {
+            var escuchador = roomRef.collection('callerCandidates').onSnapshot(snapshot => {
                 snapshot.docChanges().forEach(async change => {
                     if (change.type === 'added') {
                         let data = change.doc.data();
@@ -918,71 +958,21 @@ rutas.sala = function(vecUrl){
                     }
                 });
             });
+            escuchadores.push(escuchador);
             // Listening for remote ICE candidates above
-        }
-    }
-
-    async function openUserMedia() {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-        document.getElementById('localVideo').srcObject = stream;
-        localStream = stream;
-        remoteStream = new MediaStream();
-        document.getElementById('remoteVideo').srcObject = remoteStream;
-    }
-
-    async function hangUp() {
-        const tracks = document.querySelector('#localVideo').srcObject.getTracks();
-        tracks.forEach(track => {
-            track.stop();
-        });
-        
-        if (remoteStream) {
-            remoteStream.getTracks().forEach(track => track.stop());
-        }
-        
-        if (peerConnection) {
-            peerConnection.close();
-        }
-        
-        // Delete room on hangup
-        if (roomId) {
-            const db = firebase.firestore();
-            const roomRef = db.collection('rooms').doc(roomId);
-            const calleeCandidates = await roomRef.collection('calleeCandidates').get();
-            calleeCandidates.forEach(async candidate => {
-                await candidate.ref.delete();
+            
+            
+            setInterval(function(){
+                enviarMensaje(Math.random());
+            }, 5000);
+        } else {
+            M.toast({
+                html: "Ya no existe la reunión.",
+                completeCallback: function(){window.location.href="#menu";},
             });
-            const callerCandidates = await roomRef.collection('callerCandidates').get();
-            callerCandidates.forEach(async candidate => {
-                await candidate.ref.delete();
-            });
-            await roomRef.delete();
         }
-        document.location.reload(true);
     }
-
-    function registerPeerConnectionListeners() {
-        peerConnection.addEventListener('icegatheringstatechange', () => {
-            console.log(`ICE gathering state changed: ${peerConnection.iceGatheringState}`);
-        });
-        
-        peerConnection.addEventListener('connectionstatechange', () => {
-            console.log(`Connection state change: ${peerConnection.connectionState}`);
-        });
-    
-        peerConnection.addEventListener('signalingstatechange', () => {
-            console.log(`Signaling state change: ${peerConnection.signalingState}`);
-        });
-        
-        peerConnection.addEventListener('iceconnectionstatechange ', () => {
-            console.log(`ICE connection state change: ${peerConnection.iceConnectionState}`);
-        });
-    }
-    
-    document.getElementById("create-room").onclick = createRoom;
-    document.getElementById("open-camera").onclick = openUserMedia;
-    document.getElementById("join-room").onclick = joinRoomById;
-    document.getElementById("close-room").onclick = hangUp;
+    joinRoomById();
 };
 
 //------------------------------------------------------------------------------------------------------------

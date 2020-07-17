@@ -28,7 +28,8 @@ function datosAmigo(correo,cb){
     });
 }
 
-async function hangUp() {
+function hangUp() {
+    var db = parametros.db;
     if (remoteStream) {
         remoteStream.getTracks().forEach(track => track.stop());
         remoteStream = null;
@@ -41,17 +42,18 @@ async function hangUp() {
     
     // Delete room on hangup
     if (roomId) {
-        const db = firebase.firestore();
         const roomRef = db.collection('rooms').doc(roomId);
-        const calleeCandidates = await roomRef.collection('calleeCandidates').get();
-        calleeCandidates.forEach(async candidate => {
+        roomRef.collection('calleeCandidates').get().then(calleeCandidates => {
+          calleeCandidates.forEach(async candidate => {
+              await candidate.ref.delete();
+          });
+        })
+        roomRef.collection('callerCandidates').get().then(callerCandidates => {
+          callerCandidates.forEach(async candidate => {
             await candidate.ref.delete();
+          });
         });
-        const callerCandidates = await roomRef.collection('callerCandidates').get();
-        callerCandidates.forEach(async candidate => {
-            await candidate.ref.delete();
-        });
-        await roomRef.delete();
+        roomRef.delete();
         roomId = null;
     }
     if (escuchadores.length>0){
@@ -103,6 +105,8 @@ rutas.menu = function(){
 </div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
+
+    hangUp();
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -446,7 +450,7 @@ rutas.coach = function(){
 </div>
 <ul class="collapsible orange z-depth-2">
   <li>
-    <div class="collapsible-header orange white-text" onclick="window.location.href="#publica">
+    <div class="collapsible-header orange white-text" onclick="window.location.href='#publica'">
       <i class="material-icons">filter_drama</i>
       <b>Invitación Pública</b>
     </div>
@@ -461,12 +465,13 @@ rutas.coach = function(){
     <div class="collapsible-body">
       <ul class="collection" id="amistades">
       </ul>
+      <br>
       <div class="row">
         <div class="col s6">
-          <a id="izquierda" class="waves-effect waves-light btn"><i class="material-icons left">chevron_left</i></a>
+          <a id="izquierda" class="waves-effect waves-light btn green"><i class="material-icons left">chevron_left</i></a>
         </div>
         <div class="col s6">
-          <a id="derecha" class="waves-effect waves-light btn"><i class="material-icons right">chevron_right</i></a>
+          <a id="derecha" class="waves-effect waves-light right btn green"><i class="material-icons right">chevron_right</i></a>
         </div>
       </div>
     </div>
@@ -519,8 +524,9 @@ rutas.coach = function(){
     var pagina = 0;
     var max = Math.floor(parametros.misdatos.amigos.length/10);
     showPagina();
-};
 
+    hangUp();
+};
 //------------------------------------------------------------------------------------------------------------
 
 rutas.publica = function(){
@@ -530,12 +536,12 @@ rutas.publica = function(){
     <div class="col s12 m6">
       <div class="card orange">
         <div class="card-content white-text">
-          <span class="card-title">En espera de Coachee</span>
+          <span class="card-title"><b>En espera de Coachee</b></span>
           <p>Mantenga esta ventana abierta</p>
           <p>Si sale de esta ventana, se retirará de la lista de Coachs</p>
         </div>
-        <div class="card-action">
-          <a href="#menu">Salir</a>
+        <div class="card-action orange lighten-3">
+          <a class="black-text" href="#menu">Salir</a>
         </div>
       </div>
     </div>
@@ -570,7 +576,7 @@ rutas.directa = function(vecUrl){
     <div class="col s12 m6">
       <div class="card orange">
         <div class="card-content white-text">
-          <span class="card-title">En espera de Coachee</span>
+          <span class="card-title"><b>En espera de Coachee</b></span>
           <div class="row">
             <div class="col s3">
               <img class="responsive-img" id="photoURL">
@@ -583,8 +589,8 @@ rutas.directa = function(vecUrl){
           <p>Mantenga esta ventana abierta</p>
           <p>Si sale de esta ventana, se retirará de la lista de Coachs</p>
         </div>
-        <div class="card-action">
-          <a href="#menu">Salir</a>
+        <div class="card-action orange lighten-2">
+          <a class="black-text" href="#menu">Salir</a>
         </div>
       </div>
     </div>

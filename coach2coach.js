@@ -796,7 +796,7 @@ rutas.setsala = function(vecUrl){
     }
     
     function imprimirMensaje(mensaje){
-        document.getElementById("mensaje").innterHTML = mensaje;
+        document.getElementById("mensaje").innerHTML = mensaje;
     }
     
     async function createRoom() {
@@ -839,7 +839,7 @@ rutas.setsala = function(vecUrl){
                 type: offer.type,
                 sdp: offer.sdp,
             },
-            'mansaje': "",
+            'mensaje': "",
             'correo': parametros.misdatos.email,
         };
         await roomRef.set(roomWithOffer);
@@ -851,9 +851,13 @@ rutas.setsala = function(vecUrl){
             if (!peerConnection.currentRemoteDescription && data && data.answer) {
                 const rtcSessionDescription = new RTCSessionDescription(data.answer);
                 await peerConnection.setRemoteDescription(rtcSessionDescription);
-                imprimirMensaje(data.mensaje);
+            }
+            if (data){
+              imprimirMensaje(data.mensaje);
             }
         });
+
+        
         escuchadores.push(escuchador);
         // Listening for remote session description above
     

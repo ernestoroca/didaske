@@ -884,9 +884,9 @@ rutas.sala = function(vecUrl){
     var roomId = vecUrl[1];
     var roomRef, roomSnapshot,peerConnection;
     var db = firebase.firestore();
-    remoteStream = new MediaStream();
     
     var strHtml = `
+<video id="remoteVideo" autoplay playsinline style="display:none"></video>
 <div class="row">
   <div class="col s4">
     <img class="responsive-img" src="" id="photoURL">
@@ -898,6 +898,9 @@ rutas.sala = function(vecUrl){
 </div>
     `;
     document.getElementById("contenedor").innerHTML = strHtml;
+    
+    remoteStream = new MediaStream();
+    document.getElementById('remoteVideo').srcObject = remoteStream;
     
     function enviarMensaje(mensaje){
         roomRef.update({

@@ -1415,15 +1415,6 @@ rutas.directorio = function(){
   </div>
 </div>
 <div class="row">
-  <div class="input-field col s10">
-    <input id="nuevo" type="text" class="validate">
-    <label for="nuevo">Nuevo tema</label>
-  </div>
-  <div class="input-field col s2">
-    <a id="enviar" class="waves-effect waves-light btn orange"><i class="material-icons right">send</i></a>
-  </div>
-</div>
-<div class="row">
   <div class="input-field col s12">
     <textarea id="texto" class="materialize-textarea"></textarea>
     <label for="texto">Directorio</label>
@@ -1437,7 +1428,7 @@ rutas.directorio = function(){
     
     function imprimirTronco(){
         let lng = path.length;
-        let strHtml = `<a class="waves-effect waves-light btn orange">Inicio</a>`;
+        let strHtml = `<a class="waves-effect waves-light btn orange">Home</a>`;
         for (let i=0;i<lng;i++){
             strHtml += ` <a class="waves-effect waves-light btn orange">${path[i]}</a>`;
         }
@@ -1469,21 +1460,28 @@ rutas.directorio = function(){
     }
     
     function exportarJSON(){
-        document.getElementById("texto").innerText = JSON.stringify(directorioPreguntas);
+        var strng = JSON.stringify(directorioPreguntas);
+        var nuevo = strng.replace(',"sub":[]',"");
+        while(strng !== nuevo){
+          strng = (' ' + nuevo).slice(1);
+          nuevo = strng.replace(',"sub":[]',"");
+        }
+        document.getElementById("texto").innerText = strng;
     }
     
     document.getElementById("directorio").onclick = function(evento){
         let destino = evento.target;
-        if (destino.tagName !== "LI"){
+        if (destino.tagName !== "A"){
             return;
         }
         let txt = destino.innerHTML;
+        let vec = txt.split("<div");
+        txt = vec[0];
         let lng = path.length;
         let i;
         for(i=lng-1;i>=0;i--){
-            if (path[i] === txt){
+            if (path[i] !== txt){
                 path.pop();
-                break;
             }
         }
         imprimirTronco();
@@ -1523,4 +1521,5 @@ rutas.directorio = function(){
         imprimirHojas();
         exportarJSON();
     };
+    imprimirTronco();
 };

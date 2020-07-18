@@ -880,12 +880,17 @@ rutas.setsala = function(vecUrl){
 
 //------------------------------------------------------------------------------------------------------------
 
+var directorioElogios = ["¡Excelente!","¡Muy Bien!","¡Buena elección!"];
+
+var directorioPreguntas = [];
+
 rutas.sala = function(vecUrl){
     var roomId = vecUrl[1];
     var roomRef, roomSnapshot,peerConnection;
     var db = firebase.firestore();
     
-    var strHtml = `
+    var strHtml;
+    {strHtml = `
 <video id="remoteVideo" autoplay playsinline style="display:none"></video>
 <div class="row">
   <div class="col s4">
@@ -896,17 +901,135 @@ rutas.sala = function(vecUrl){
     <p id="correo"></p>
   </div>
 </div>
-    `;
+<div class="row">
+  <div class="col s12">
+    <ul class="tabs">
+      <li class="tab col s6"><a href="#tab-elogios">Elogios</a></li>
+      <li class="tab col s6"><a href="#tab-preguntas">Preguntas</a></li>
+    </ul>
+  </div>
+  <div id="elogios" class="col s12">
+    <ul class="collection" id="tabla-elogios">
+    </ul>
+  </div>
+  <div id="preguntas" class="col s12">
+    <div class="row">
+      <div class="col s12" id="directorio">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s12">
+        <ul class="collection" id="items">
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+    `;}
     document.getElementById("contenedor").innerHTML = strHtml;
+    strHtml = null;
     
     remoteStream = new MediaStream();
     document.getElementById('remoteVideo').srcObject = remoteStream;
+    
+    function pintarElogios(){
+        let lng = directorioElogios.length;
+        let i;
+        let lista = "";
+        for(i=0;i<lng;i++){
+            lista += `<li>${directorioElogios[i]}</li>`;
+        }
+        document.getElementById("tabla-elogios").innerHTML = lista;
+    }
+    
+    document.getElementById("tabla-elogios").onclick = function(evento){
+        let destino = evento.target;
+        if (destino.tagName !== "LI"){
+            return;
+        }
+        enviarMensaje(destino.innerHTML);
+    };
+    
+    
+    var path = [];
+    var hijo = [];
+    
+    function imprimirTronco(){
+        let lng = path.length;
+        let strHtml = `<a class="waves-effect waves-light btn orange">Inicio</a>`;
+        for (let i=0;i<lng;i++){
+            strHtml += ` <a class="waves-effect waves-light btn orange">${path[i]}</a>`;
+        }
+        document.getElementById("directorio").innerHTML = strHtml;
+        imprimirHojas();
+    }
+    
+    function imprimirHojas(){
+        let lngVec = path.length;
+        let lngHij;
+        hijo = directorioPreguntas;
+        for (let i=0;i<lngVec;i++){
+            lngHij = hijo.length;
+            for (let j=0;j<lngHij;j++){
+                if (hijo[j].label === path[i]){
+                    hijo = hijo[j].sub;
+                    break;
+                }
+            }
+        }
+        lngHij = hijo.length;
+        let strHtml = "";
+        let color;
+        for (let j=0;j<lngHij;j++){
+            color = (hijo[j].sub) ? "orange" : "green";
+            strHtml += `<li class="collection-item ${color} lighten-4">${hijo[j].label}</li>`;
+        }
+        document.getElementById("items").innerHTML = strHtml;
+    }
+    
+    document.getElementById("directorio").onclick = function(evento){
+        let destino = evento.target;
+        if (destino.tagName !== "LI"){
+            return;
+        }
+        let txt = destino.innerHTML;
+        let lng = path.length;
+        let i;
+        for(i=lng-1;i>=0;i--){
+            if (path[i] === txt){
+                path.pop();
+                break;
+            }
+        }
+        imprimirTronco();
+    };
+    
+    document.getElementById("items").onclick = function(evento){
+        let destino = evento.target;
+        if (destino.tagName !== "LI"){
+            return;
+        }
+        let txt = destino.innerHTML;
+        let lng = hijo.length;
+        for(let i=0;i<lng;i++){
+            if(hijo[i].label === txt){
+                if (hijo[i].sub){
+                    path.push(hijo[i].label);
+                    imprimirTronco();
+                } else {
+                    enviarMensaje(txt);
+                }
+                break;
+            }
+        }
+    };
     
     function enviarMensaje(mensaje){
         roomRef.update({
             mensaje: mensaje,
         });
     }
+    
     function imprimirCoach(datos){
         document.getElementById("photoURL").src = datos.photoURL;
         document.getElementById("displayName").innerHTML = datos.displayName;
@@ -974,10 +1097,7 @@ rutas.sala = function(vecUrl){
             escuchadores.push(escuchador);
             // Listening for remote ICE candidates above
             
-            
-            setInterval(function(){
-                enviarMensaje(Math.random());
-            }, 5000);
+            enviarMensaje("¡Bienvenido a la Reunión!");
         } else {
             M.toast({
                 html: "Ya no existe la reunión.",
@@ -986,6 +1106,8 @@ rutas.sala = function(vecUrl){
         }
     }
     joinRoomById();
+    pintarElogios();
+    imprimirTronco();
 };
 
 //------------------------------------------------------------------------------------------------------------
@@ -1265,4 +1387,140 @@ rutas.xxx = function(){
     document.getElementById("open-camera").onclick = openUserMedia;
     document.getElementById("join-room").onclick = joinRoomById;
     document.getElementById("close-room").onclick = hangUp;
+};
+
+//------------------------------------------------------------------------------------------------------------
+
+rutas.directorio = function(){
+    var strHtml;
+    {strHtml = `
+<br>
+<div class="row">
+  <div class="col s12" id="directorio">
+  </div>
+</div>
+<div class="row">
+  <div class="col s12">
+    <ul class="collection" id="items">
+    </ul>
+  </div>
+</div>
+<div class="row">
+  <div class="input-field col s10">
+    <input id="nuevo" type="text" class="validate">
+    <label for="nuevo">Nuevo tema</label>
+  </div>
+  <div class="input-field col s2">
+    <a id="enviar" class="waves-effect waves-light btn orange"><i class="material-icons right">send</i></a>
+  </div>
+</div>
+<div class="row">
+  <div class="input-field col s10">
+    <input id="nuevo" type="text" class="validate">
+    <label for="nuevo">Nuevo tema</label>
+  </div>
+  <div class="input-field col s2">
+    <a id="enviar" class="waves-effect waves-light btn orange"><i class="material-icons right">send</i></a>
+  </div>
+</div>
+<div class="row">
+  <div class="input-field col s12">
+    <textarea id="texto" class="materialize-textarea"></textarea>
+    <label for="texto">Directorio</label>
+  </div>
+</div>
+    `;}
+    document.getElementById("contenedor").innerHTML = strHtml;
+    
+    var path = [];
+    var hijo = [];
+    
+    function imprimirTronco(){
+        let lng = path.length;
+        let strHtml = `<a class="waves-effect waves-light btn orange">Inicio</a>`;
+        for (let i=0;i<lng;i++){
+            strHtml += ` <a class="waves-effect waves-light btn orange">${path[i]}</a>`;
+        }
+        document.getElementById("directorio").innerHTML = strHtml;
+        imprimirHojas();
+    }
+    
+    function imprimirHojas(){
+        let lngVec = path.length;
+        let lngHij;
+        hijo = directorioPreguntas;
+        for (let i=0;i<lngVec;i++){
+            lngHij = hijo.length;
+            for (let j=0;j<lngHij;j++){
+                if (hijo[j].label === path[i]){
+                    hijo = hijo[j].sub;
+                    break;
+                }
+            }
+        }
+        lngHij = hijo.length;
+        let strHtml = "";
+        let color;
+        for (let j=0;j<lngHij;j++){
+            color = (hijo[j].sub) ? "orange" : "green";
+            strHtml += `<li class="collection-item ${color} lighten-4">${hijo[j].label}</li>`;
+        }
+        document.getElementById("items").innerHTML = strHtml;
+    }
+    
+    function exportarJSON(){
+        document.getElementById("texto").innerText = JSON.stringify(directorioPreguntas);
+    }
+    
+    document.getElementById("directorio").onclick = function(evento){
+        let destino = evento.target;
+        if (destino.tagName !== "LI"){
+            return;
+        }
+        let txt = destino.innerHTML;
+        let lng = path.length;
+        let i;
+        for(i=lng-1;i>=0;i--){
+            if (path[i] === txt){
+                path.pop();
+                break;
+            }
+        }
+        imprimirTronco();
+    };
+    
+    document.getElementById("items").onclick = function(evento){
+        let destino = evento.target;
+        if (destino.tagName !== "LI"){
+            return;
+        }
+        let txt = destino.innerHTML;
+        let lng = hijo.length;
+        for(let i=0;i<lng;i++){
+            if(hijo[i].label === txt){
+                if (hijo[i].sub){
+                    path.push(hijo[i].label);
+                    imprimirTronco();
+                } else {
+                    enviarMensaje(txt);
+                }
+                break;
+            }
+        }
+    };
+    
+    document.getElementById('enviar').onclick = function(){
+        var palabra = document.getElementById("nuevo").value;
+        palabra = palabra.trim();
+        if (palabra === ""){
+            return;
+        }
+        hijo.push({
+            label: palabra,
+            sub: []
+        });
+        document.getElementById("nuevo").value = "";
+        imprimirHojas();
+        exportarJSON();
+    };
 };

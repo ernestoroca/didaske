@@ -1410,7 +1410,7 @@ rutas.directorio = function(){
     <input id="nuevo" type="text" class="validate">
     <label for="nuevo">Nuevo tema</label>
   </div>
-  <div class="input-field col s2">
+  <div class="col s2">
     <a id="enviar" class="waves-effect waves-light btn orange"><i class="material-icons right">send</i></a>
   </div>
 </div>
@@ -1420,95 +1420,93 @@ rutas.directorio = function(){
     <label for="texto">Directorio</label>
   </div>
 </div>
+<div class="row">
+  <div class="col s6">
+    <a id="leer" class="waves-effect waves-light btn orange"><i class="material-icons right">send</i></a>
+  </div>
+</div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
     
     var path = [];
     var hijo = [];
+    var directorioBeta;
     
     function imprimirTronco(){
+        hijo = directorioBeta;
         let lng = path.length;
-        let strHtml = `<a class="waves-effect waves-light btn orange">Home</a>`;
+        let strHtml = `<a id= "home" class="waves-effect waves-light btn orange">Home</a>`;
         for (let i=0;i<lng;i++){
-            strHtml += ` <a class="waves-effect waves-light btn orange">${path[i]}</a>`;
+            strHtml += ` <a id="${i}" class="waves-effect waves-light btn orange">${hijo[path[i]].label}</a>`;
+            hijo = hijo[path[i]].sub;
         }
         document.getElementById("directorio").innerHTML = strHtml;
         imprimirHojas();
     }
     
     function imprimirHojas(){
-        let lngVec = path.length;
-        let lngHij;
-        hijo = directorioPreguntas;
-        for (let i=0;i<lngVec;i++){
-            lngHij = hijo.length;
-            for (let j=0;j<lngHij;j++){
-                if (hijo[j].label === path[i]){
-                    hijo = hijo[j].sub;
-                    break;
-                }
-            }
-        }
-        lngHij = hijo.length;
+        let lngHij = hijo.length;
         let strHtml = "";
-        let color;
-        for (let j=0;j<lngHij;j++){
-            color = (hijo[j].sub) ? "orange" : "green";
-            strHtml += `<li class="collection-item ${color} lighten-4">${hijo[j].label}</li>`;
+        let color,borrar;
+        for (let i=0;i<lngHij;i++){
+            if (hijo[i].sub.length > 0){
+                color = "orange";
+                borrar = "";
+            } else {
+                color = "green";
+                borrar = `<i id ="borrar-${i}" class="material-icons right orange-text">delete</i>`;
+            }
+            color = (hijo[i].sub.length > 0) ? "orange" : "green";
+
+            strHtml += `<li id="${i}" class="collection-item ${color} lighten-4">${hijo[i].label} ${borrar}</li>`;
         }
         document.getElementById("items").innerHTML = strHtml;
     }
     
     function exportarJSON(){
-        var strng = JSON.stringify(directorioPreguntas);
-        var nuevo = strng.replace(',"sub":[]',"");
-        while(strng !== nuevo){
-          strng = (' ' + nuevo).slice(1);
-          nuevo = strng.replace(',"sub":[]',"");
-        }
+        var strng = JSON.stringify(directorioBeta);
         document.getElementById("texto").innerText = strng;
+        M.textareaAutoResize(document.getElementById("texto"));
     }
     
     document.getElementById("directorio").onclick = function(evento){
         let destino = evento.target;
-        if (destino.tagName !== "A"){
-            return;
+        while (destino.id === ""){
+            destino = destino.parentElement;
         }
-        let txt = destino.innerHTML;
-        let vec = txt.split("<div");
-        txt = vec[0];
-        let lng = path.length;
-        let i;
-        for(i=lng-1;i>=0;i--){
-            if (path[i] !== txt){
-                path.pop();
-            }
+        if (destino.id === "home"){
+            path = [];
+        } else {
+            path.length = parseInt(destino.id,10) + 1;
         }
         imprimirTronco();
     };
     
     document.getElementById("items").onclick = function(evento){
         let destino = evento.target;
-        if (destino.tagName !== "LI"){
-            return;
+        while (destino.id === ""){
+            destino = destino.parentElement;
         }
-        let txt = destino.innerHTML;
-        let lng = hijo.length;
-        for(let i=0;i<lng;i++){
-            if(hijo[i].label === txt){
-                if (hijo[i].sub){
-                    path.push(hijo[i].label);
-                    imprimirTronco();
-                } else {
-                    enviarMensaje(txt);
-                }
-                break;
+        let id = destino.id;
+        let i;
+        if(id.indexOf("borrar")>=0){
+            id = id.replace("borrar-","");
+            i = parseInt(id,10);
+            if (hijo[i].sub.length > 0){
+                return;
+            } else {
+                hijo.splice(i,1);
+                imprimirTronco();
             }
+        } else {
+            i = parseInt(id,10);
+            path.push(i);
+            imprimirTronco();
         }
     };
     
     document.getElementById('enviar').onclick = function(){
-        var palabra = document.getElementById("nuevo").value;
+        let palabra = document.getElementById("nuevo").value;
         palabra = palabra.trim();
         if (palabra === ""){
             return;
@@ -1521,5 +1519,18 @@ rutas.directorio = function(){
         imprimirHojas();
         exportarJSON();
     };
-    imprimirTronco();
+
+    function actualizar(){
+        let strng = document.getElementById("texto").value;
+        directorioBeta = JSON.parse(strng);
+        imprimirTronco();
+    }
+    document.getElementById('leer').onclick = actualizar;
+    
+
+    var strng = JSON.stringify(directorioPreguntas);
+    document.getElementById("texto").innerText = strng;
+    M.textareaAutoResize(document.getElementById("texto"));
+    actualizar();
+    strng = null
 };

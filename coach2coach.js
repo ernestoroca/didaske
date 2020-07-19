@@ -953,74 +953,67 @@ rutas.sala = function(vecUrl){
     
     var path = [];
     var hijo = [];
+    var directorioBeta;
     
     function imprimirTronco(){
+        hijo = directorioBeta;
         let lng = path.length;
-        let strHtml = `<a class="waves-effect waves-light btn orange">Inicio</a>`;
+        let strHtml = `<a id= "home" class="waves-effect waves-light btn orange">Home</a>`;
         for (let i=0;i<lng;i++){
-            strHtml += ` <a class="waves-effect waves-light btn orange">${path[i]}</a>`;
+            strHtml += ` <a id="${i}" class="waves-effect waves-light btn orange">${hijo[path[i]].label}</a>`;
+            hijo = hijo[path[i]].sub;
         }
         document.getElementById("directorio").innerHTML = strHtml;
         imprimirHojas();
     }
     
     function imprimirHojas(){
-        let lngVec = path.length;
-        let lngHij;
-        hijo = directorioPreguntas;
-        for (let i=0;i<lngVec;i++){
-            lngHij = hijo.length;
-            for (let j=0;j<lngHij;j++){
-                if (hijo[j].label === path[i]){
-                    hijo = hijo[j].sub;
-                    break;
-                }
-            }
-        }
-        lngHij = hijo.length;
+        let lngHij = hijo.length;
         let strHtml = "";
         let color;
-        for (let j=0;j<lngHij;j++){
-            color = (hijo[j].sub) ? "orange" : "green";
-            strHtml += `<li class="collection-item ${color} lighten-4">${hijo[j].label}</li>`;
+        for (let i=0;i<lngHij;i++){
+            if (hijo[i].sub.length > 0){
+                color = "orange";
+            } else {
+                color = "green";
+            }
+            color = (hijo[i].sub.length > 0) ? "orange" : "green";
+
+            strHtml += `<li id="${i}" class="collection-item ${color} lighten-4">${hijo[i].label}</li>`;
         }
         document.getElementById("items").innerHTML = strHtml;
     }
     
+    function exportarJSON(){
+        var strng = JSON.stringify(directorioBeta);
+        document.getElementById("texto").innerText = strng;
+        M.textareaAutoResize(document.getElementById("texto"));
+    }
+    
     document.getElementById("directorio").onclick = function(evento){
         let destino = evento.target;
-        if (destino.tagName !== "LI"){
-            return;
+        while (destino.id === ""){
+            destino = destino.parentElement;
         }
-        let txt = destino.innerHTML;
-        let lng = path.length;
-        let i;
-        for(i=lng-1;i>=0;i--){
-            if (path[i] === txt){
-                path.pop();
-                break;
-            }
+        if (destino.id === "home"){
+            path = [];
+        } else {
+            path.length = parseInt(destino.id,10) + 1;
         }
         imprimirTronco();
     };
     
     document.getElementById("items").onclick = function(evento){
         let destino = evento.target;
-        if (destino.tagName !== "LI"){
-            return;
+        while (destino.id === ""){
+            destino = destino.parentElement;
         }
-        let txt = destino.innerHTML;
-        let lng = hijo.length;
-        for(let i=0;i<lng;i++){
-            if(hijo[i].label === txt){
-                if (hijo[i].sub){
-                    path.push(hijo[i].label);
-                    imprimirTronco();
-                } else {
-                    enviarMensaje(txt);
-                }
-                break;
-            }
+        let i = parseInt(destino.id,10);
+        if (hijo[i].sub.length > 0){
+            path.push(i);
+            imprimirTronco();
+        } else {
+            enviarMensaje(hijo[i].label);
         }
     };
     

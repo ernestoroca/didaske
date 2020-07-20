@@ -9,6 +9,7 @@ var parametros = {
   uid: null,
 };
 var eventoNuevoMensaje = null;
+var soundAlert;
 
 var rutas = {};
 
@@ -38,6 +39,7 @@ function sendTokenToServer(token){
     }).then(function(docRef){
         parametros.misdatos.token = token;
     }).catch(function(error){
+        soundAlert.play();
         M.toast({html:"Error agregando token: " + error});
     });
 }
@@ -52,6 +54,7 @@ function deleteTokenToServer(){
     }).then(function(docRef){
         parametros.misdatos.token = "";
     }).catch(function(error){
+        soundAlert.play();
         M.toast({html:"Error agregando clase: " + error});
     });
 }
@@ -74,6 +77,7 @@ function deleteToken() {
 
 function setMensajeria(){
     if (!firebase.messaging.isSupported()){
+        soundAlert.play();
         M.toast({html:'Por el momento IPhone no cuenta con notificaciones.'});
         return;
     }
@@ -100,6 +104,7 @@ function setMensajeria(){
         if (url === "#chat/"+remitente || url === "#chatt/"+remitente){
             return;
         }
+        soundAlert.play();
         M.toast({html:'Llegó una notificación:'});
     });
 }
@@ -206,4 +211,10 @@ window.onload = function(){
     parametros.funciones = firebase.functions();
     authinit();
     window.onhashchange = reload;
+    soundAlert = document.createElement("audio");
+    soundAlert.src = "/timbre.ogg";
+    soundAlert.setAttribute("preload", "auto");
+    soundAlert.setAttribute("controls", "none");
+    soundAlert.style.display = "none";
+    document.body.appendChild(soundAlert);
 };

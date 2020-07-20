@@ -953,10 +953,9 @@ rutas.sala = function(vecUrl){
     
     var path = [];
     var hijo = [];
-    var directorioBeta;
     
     function imprimirTronco(){
-        hijo = directorioBeta;
+        hijo = directorioPreguntas;
         let lng = path.length;
         let strHtml = `<a id= "home" class="waves-effect waves-light btn orange">Home</a>`;
         for (let i=0;i<lng;i++){
@@ -982,12 +981,6 @@ rutas.sala = function(vecUrl){
             strHtml += `<li id="${i}" class="collection-item ${color} lighten-4">${hijo[i].label}</li>`;
         }
         document.getElementById("items").innerHTML = strHtml;
-    }
-    
-    function exportarJSON(){
-        var strng = JSON.stringify(directorioBeta);
-        document.getElementById("texto").innerText = strng;
-        M.textareaAutoResize(document.getElementById("texto"));
     }
     
     document.getElementById("directorio").onclick = function(evento){

@@ -6,7 +6,6 @@ var roomId;
 var remoteStream;
 
 var directorioElogios = ["¡Excelente!","¡Muy Bien!","¡Buena elección!","Me gusta"];
-
 var directorioPreguntas = [{"label":"Hábito de Coaching","sub":[{"label":"Pregunta de Inicio","sub":[{"label":"¿Qué tienes en mente?"}]},{"label":"Preguntas YQM","sub":[{"label":"¿Y qué más?"},{"label":"¿Hay algo mas?"},{"label":"¿Y qué más puedes hacer?"},{"label":"¿Y qué más podría ser posible?"},{"label":"¿Y cuál es el desafío aquí para ti?"},{"label":"¿Y qué más es un desafío aquí para ti?"}]},{"label":"Preguntas de Enfoque","sub":[{"label":"¿Cuál es el verdadero desafío aquí para ti?"},{"label":"¿Qué te hizo elegir esto?"},{"label":"¿Qué es importante aquí para ti?"}]},{"label":"Preguntas Fundamentales","sub":[{"label":"¿Qué deseas?"},{"label":"¿Qué quieres realmente?"}]},{"label":"Preguntas Perezosas","sub":[{"label":"¿Cómo de pueden ayudar? ¿Quién?"},{"label":"¿Qué quieres de quién?"},{"label":"¿Qué necesitas? ¿De quien?"},{"label":"¿A quién más se lo has pedido?"},{"label":"Si no pudiera hacer todo, pero pudiera hacer sólo una parte, ¿qué parte quieres que haga?"}]},{"label":"Preguntas Perezosas 2","sub":[{"label":"¿Cómo puedo ayudar?"},{"label":"¿Que quieres de mi?"},{"label":"¿Por qué me estás preguntando esto?"},{"label":"¿A quién más lo has pedido?"},{"label":"Si no pudiera hacer todo, pero pudiera hacer sólo una parte, ¿qué parte quieres que haga?"},{"label":"¿Qué quieres que quite de mi plato para poder hacer esto?"}]},{"label":"Preguntas Estratégicas","sub":[{"label":"Si dices sí a esto, ¿a qué dices no?"},{"label":"Cuando dices que esto es urgente, ¿qué quieres decir?"},{"label":"¿De acuerdo con qué estándar se necesita completar esto? ¿Para cuando?"}]},{"label":"Preguntas Estratégicas 2","sub":[{"label":"¿Qué aspiras ganar?"},{"label":"¿Dónde trabajarás?"},{"label":"¿Cómo vas a ganar?"},{"label":"¿Qué capacidades se necesitan?"},{"label":"¿Qué sistema de gestión se necesita?"}]},{"label":"Pregunta de Aprendizaje","sub":[{"label":"¿Qué fue lo más útil para ti que sacaste de esta conversación?"}]}]}];
 
 function datosAmigo(correo,cb){
@@ -742,6 +741,7 @@ rutas.setsala = function(vecUrl){
 </div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
+    
     datosAmigo(coach,imprimirPersona);
     function imprimirPersona(datos){
         document.getElementById("displayName").innerHTML = datos.displayName;
@@ -751,6 +751,7 @@ rutas.setsala = function(vecUrl){
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
         navigator.mediaDevices.getUserMedia({video: false, audio: true}).then((stream) => {localStream = stream});
     } else {
+        soundAlert.play();
         M.toast({
             html: "Su equipo no sporta conferencia",
             completeCallback: function(){window.location.href="#menu";},
@@ -768,6 +769,7 @@ rutas.setsala = function(vecUrl){
         if (doc.exists) {
             var data = doc.data();
             if (data.sala !=""){
+                soundAlert.play();
                 M.toast({
                     html: "Ya no existe la reunión.",
                     completeCallback: function(){window.location.href="#menu";},
@@ -776,6 +778,7 @@ rutas.setsala = function(vecUrl){
                 createRoom();
             }
         } else {
+            soundAlert.play();
             M.toast({
                 html: "Ya no existe la reunión.",
                 completeCallback: function(){window.location.href="#menu";},
@@ -783,6 +786,7 @@ rutas.setsala = function(vecUrl){
         }
     }).catch(err => {
         console.log(err);
+        soundAlert.play();
         M.toast({
             html: "Ya no existe la reunión.",
             completeCallback: function(){window.location.href="#menu";},
@@ -800,6 +804,7 @@ rutas.setsala = function(vecUrl){
     }
     
     function imprimirMensaje(mensaje){
+        soundAlert.play();
         document.getElementById("mensaje").innerHTML = mensaje;
     }
     
@@ -861,7 +866,6 @@ rutas.setsala = function(vecUrl){
             }
         });
 
-        
         escuchadores.push(escuchador);
         // Listening for remote session description above
     
@@ -927,6 +931,7 @@ rutas.sala = function(vecUrl){
 </div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
+    soundAlert.play();
     strHtml = null;
     
     remoteStream = new MediaStream();

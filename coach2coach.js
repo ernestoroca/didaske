@@ -890,7 +890,7 @@ rutas.setsala = function(vecUrl){
 
 rutas.sala = function(vecUrl){
     var roomId = vecUrl[1];
-    var roomRef, roomSnapshot,peerConnection;
+    var roomRef, roomSnapshot, peerConnection;
     var db = firebase.firestore();
     
     var strHtml;
@@ -908,8 +908,8 @@ rutas.sala = function(vecUrl){
 <div class="row">
   <div class="col s12">
     <ul class="tabs">
-      <li class="tab col s6"><a href="#tab-elogios">Elogios</a></li>
-      <li class="tab col s6"><a href="#tab-preguntas">Preguntas</a></li>
+      <li class="tab col s6"><a id="tab-preguntas">Preguntas</a></li>
+      <li class="tab col s6"><a id="tab-elogios" style="display:none;">Elogios</a></li>
     </ul>
   </div>
   <div id="elogios" class="col s12">
@@ -934,6 +934,15 @@ rutas.sala = function(vecUrl){
     soundAlert.play();
     strHtml = null;
     
+    document.getElementById("tab-elogios").onclick = function(){
+        document.getElementById("elogios").style.display = "block";
+        document.getElementById("preguntas").style.display = "none";
+    }
+    document.getElementById("tab-preguntas").onclick = function(){
+        document.getElementById("elogios").style.display = "none";
+        document.getElementById("preguntas").style.display = "block";
+    }
+    
     remoteStream = new MediaStream();
     document.getElementById('remoteVideo').srcObject = remoteStream;
     
@@ -942,7 +951,7 @@ rutas.sala = function(vecUrl){
         let i;
         let lista = "";
         for(i=0;i<lng;i++){
-            lista += `<li>${directorioElogios[i]}</li>`;
+            lista += `<li class="collection-item">${directorioElogios[i]}</li>`;
         }
         document.getElementById("tabla-elogios").innerHTML = lista;
     }
@@ -976,12 +985,11 @@ rutas.sala = function(vecUrl){
         let strHtml = "";
         let color;
         for (let i=0;i<lngHij;i++){
-            if (hijo[i].sub.length > 0){
+            if (hijo[i].sub > 0){
                 color = "orange";
             } else {
                 color = "green";
             }
-            color = (hijo[i].sub.length > 0) ? "orange" : "green";
 
             strHtml += `<li id="${i}" class="collection-item ${color} lighten-4">${hijo[i].label}</li>`;
         }

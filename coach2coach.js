@@ -784,7 +784,7 @@ rutas.setsala = function(vecUrl){
         }
         if (document.getElementById("minutos")){
           document.getElementById("minutos").innerText = minutos;
-          document.getElementById("segundos").innerText = segundos;
+          document.getElementById("segundos").innerText = (segundos < 10) ? "0" + segundos: segundos;
         } else {
           clearInterval(reloj);
         }
@@ -1011,7 +1011,7 @@ rutas.sala = function(vecUrl){
         }
         if (document.getElementById("minutos")){
           document.getElementById("minutos").innerText = minutos;
-          document.getElementById("segundos").innerText = segundos;
+          document.getElementById("segundos").innerText =  (segundos < 10) ? "0" + segundos: segundos;
         } else {
           clearInterval(reloj);
         }

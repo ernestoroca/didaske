@@ -957,19 +957,23 @@ rutas.sala = function(vecUrl){
   <div class="col s12" id="reloj">
     <h4><span id="minutos">45</span>:<span id="segundos">0</span></h4>
   </div>
+  <div class="col s12" id="reloj">
+    <h4 id="lapregunta"></h4>
+  </div>
 </div>
 <div class="row">
   <div class="col s12">
     <ul class="tabs">
-      <li class="tab col s6"><a id="tab-preguntas">Preguntas</a></li>
-      <li class="tab col s6"><a id="tab-elogios" style="display:none;">Elogios</a></li>
+      <li class="tab col s6" id="tab-preguntas"><a>Preguntas</a></li>
+      <li class="tab col s6" id="tab-elogios"><a>Elogios</a></li>
     </ul>
   </div>
-  <div id="elogios" class="col s12">
+  <div id="elogios" class="col s12" style="display:none;">
     <ul class="collection" id="tabla-elogios">
     </ul>
   </div>
-  <div id="preguntas" class="col s12">
+  <div id="preguntas" class="col s12" style="display:none;">
+    <br>
     <div class="row">
       <div class="col s12" id="directorio">
       </div>
@@ -984,6 +988,9 @@ rutas.sala = function(vecUrl){
 </div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
+    M.Tabs.init(document.getElementById("tabs"));
+    document.getElementById("tab-preguntas").click();
+
     soundAlert.play();
     strHtml = null;
     
@@ -1027,7 +1034,7 @@ rutas.sala = function(vecUrl){
         let i;
         let lista = "";
         for(i=0;i<lng;i++){
-            lista += `<li class="collection-item">${directorioElogios[i]}</li>`;
+            lista += `<li class="collection-item green lighten-4">${directorioElogios[i]}</li>`;
         }
         document.getElementById("tabla-elogios").innerHTML = lista;
     }
@@ -1061,7 +1068,7 @@ rutas.sala = function(vecUrl){
         let strHtml = "";
         let color;
         for (let i=0;i<lngHij;i++){
-            if (hijo[i].sub > 0){
+            if (hijo[i].sub && hijo[i].sub.length > 0){
                 color = "orange";
             } else {
                 color = "green";
@@ -1091,7 +1098,7 @@ rutas.sala = function(vecUrl){
             destino = destino.parentElement;
         }
         let i = parseInt(destino.id,10);
-        if (hijo[i].sub.length > 0){
+        if (hijo[i].sub && hijo[i].sub.length > 0){
             path.push(i);
             imprimirTronco();
         } else {
@@ -1100,6 +1107,7 @@ rutas.sala = function(vecUrl){
     };
     
     function enviarMensaje(mensaje){
+        document.getElementById("lapregunta").innerText = mensaje;
         roomRef.update({
             mensaje: mensaje,
         });

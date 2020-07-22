@@ -782,8 +782,12 @@ rutas.setsala = function(vecUrl){
                 window.location.href = "#menu";
             },58000);
         }
-        document.getElementById("minutos").innerText = minutos;
-        document.getElementById("segundos").innerText = segundos;
+        if (document.getElementById("minutos")){
+          document.getElementById("minutos").innerText = minutos;
+          document.getElementById("segundos").innerText = segundos;
+        } else {
+          clearInterval(reloj);
+        }
     }
     
     datosAmigo(coach,imprimirPersona);
@@ -996,8 +1000,12 @@ rutas.sala = function(vecUrl){
                 window.location.href = "#menu";
             },58000);
         }
-        document.getElementById("minutos").innerText = minutos;
-        document.getElementById("segundos").innerText = segundos;
+        if (document.getElementById("minutos")){
+          document.getElementById("minutos").innerText = minutos;
+          document.getElementById("segundos").innerText = segundos;
+        } else {
+          clearInterval(reloj);
+        }
     },1000);
     
     document.getElementById("tab-elogios").onclick = function(){

@@ -1,9 +1,11 @@
 "use strict";
 
 var escuchadores = [];
+var invitados = [];
 var peerConnection;
 var roomId;
 var remoteStream;
+var localStream;
 
 var directorioElogios = ["¡Excelente!","¡Muy Bien!","¡Buena elección!","Me gusta"];
 var directorioPreguntas = [{"label":"Hábito de Coaching","sub":[{"label":"Pregunta de Inicio","sub":[{"label":"¿Qué tienes en mente?"}]},{"label":"Preguntas YQM","sub":[{"label":"¿Y qué más?"},{"label":"¿Hay algo mas?"},{"label":"¿Y qué más puedes hacer?"},{"label":"¿Y qué más podría ser posible?"},{"label":"¿Y cuál es el desafío aquí para ti?"},{"label":"¿Y qué más es un desafío aquí para ti?"}]},{"label":"Preguntas de Enfoque","sub":[{"label":"¿Cuál es el verdadero desafío aquí para ti?"},{"label":"¿Qué te hizo elegir esto?"},{"label":"¿Qué es importante aquí para ti?"}]},{"label":"Preguntas Fundamentales","sub":[{"label":"¿Qué deseas?"},{"label":"¿Qué quieres realmente?"}]},{"label":"Preguntas Perezosas","sub":[{"label":"¿Cómo de pueden ayudar? ¿Quién?"},{"label":"¿Qué quieres de quién?"},{"label":"¿Qué necesitas? ¿De quien?"},{"label":"¿A quién más se lo has pedido?"},{"label":"Si no pudiera hacer todo, pero pudiera hacer sólo una parte, ¿qué parte quieres que haga?"}]},{"label":"Preguntas Perezosas 2","sub":[{"label":"¿Cómo puedo ayudar?"},{"label":"¿Que quieres de mi?"},{"label":"¿Por qué me estás preguntando esto?"},{"label":"¿A quién más lo has pedido?"},{"label":"Si no pudiera hacer todo, pero pudiera hacer sólo una parte, ¿qué parte quieres que haga?"},{"label":"¿Qué quieres que quite de mi plato para poder hacer esto?"}]},{"label":"Preguntas Estratégicas","sub":[{"label":"Si dices sí a esto, ¿a qué dices no?"},{"label":"Cuando dices que esto es urgente, ¿qué quieres decir?"},{"label":"¿De acuerdo con qué estándar se necesita completar esto? ¿Para cuando?"}]},{"label":"Preguntas Estratégicas 2","sub":[{"label":"¿Qué aspiras ganar?"},{"label":"¿Dónde trabajarás?"},{"label":"¿Cómo vas a ganar?"},{"label":"¿Qué capacidades se necesitan?"},{"label":"¿Qué sistema de gestión se necesita?"}]},{"label":"Pregunta de Aprendizaje","sub":[{"label":"¿Qué fue lo más útil para ti que sacaste de esta conversación?"}]}]}];
@@ -33,6 +35,11 @@ function datosAmigo(correo,cb){
 
 function hangUp() {
     var db = parametros.db;
+    
+    if (localStream){
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
     if (remoteStream) {
         remoteStream.getTracks().forEach(track => track.stop());
         remoteStream = null;
@@ -56,9 +63,13 @@ function hangUp() {
             await candidate.ref.delete();
           });
         });
-        roomRef.delete();
+        setTimeout(function(){
+            roomRef.delete();
+        },5000);
         roomId = null;
     }
+    
+    //borrar escuchadores
     if (escuchadores.length>0){
         let lng = escuchadores.length;
         for(let i=0;i<lng;i++){
@@ -66,16 +77,21 @@ function hangUp() {
         }
         escuchadores = [];
     }
+    
+    //borrar invitacion publica
     db.collection("publica").doc(parametros.misdatos.email).delete().then(res => {
     }).catch(err => {
         console.log(err);
     });
-    if (localStorage.getItem("invitado") !== null){
-        db.collection("directa").doc(localStorage.getItem("invitado")).collection("invitador").doc(parametros.misdatos.email).delete().then(res => {
-            localStorage.removeItem("invitado");
-        }).catch(err => {
-            console.log(err);
-        });
+    
+    //borrar invitaciones directas
+    if (invitados.length>0){
+        let lng = invitados.length;
+        for(let i=0;i<lng;i++){
+            db.collection("directa").doc(invitados[i]).collection("invitador").doc(parametros.misdatos.email).delete();
+        }
+        invitados = [];
+        localStorage.setItem("invitados",JSON.stringify(invitados));
     }
 }
 
@@ -108,6 +124,10 @@ rutas.menu = function(){
 </div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
+    
+    if (localStorage.getItem("invitados")){
+        invitados = JSON.parse(localStorage.getItem("invitados"));
+    }
 
     hangUp();
 };
@@ -530,6 +550,7 @@ rutas.coach = function(){
 
     hangUp();
 };
+
 //------------------------------------------------------------------------------------------------------------
 
 rutas.publica = function(){
@@ -618,7 +639,8 @@ rutas.directa = function(vecUrl){
             }
         });
         escuchadores.push(escuchador);
-        localStorage.setItem("invitado",coachee);
+        invitados.push(coachee);
+        localStorage.setItem("invitados",JSON.stringify(invitados));
     }).catch(err => {
         console.log(err);
     });
@@ -711,22 +733,25 @@ rutas.coachee = function(){
 rutas.setsala = function(vecUrl){
     var coach = vecUrl[1];
     var tipo = vecUrl[2];
+    var minutos = 45;
+    var segundos = 0;
+    var reloj = null;
     
-    var strHtml, roomRef,refDoc,localStream;
+    var strHtml, roomRef,refDoc;
     var db = parametros.db;
     {strHtml= `
 <div class="row">
   <div class="col s12">
-    <h4 id="estado">Esperando al Coach</h4>
+    <img class="responsive-img" src="" id="photoURL">
+  </div>
+  <div class="col s12">
+    <p id="displayName"></p>
+    <p>${coach}</p>
   </div>
 </div>
 <div class="row">
-  <div class="col s4">
-    <img class="responsive-img" src="" id="photoURL">
-  </div>
-  <div class="col s8">
-    <p id="displayName"></p>
-    <p>${coach}</p>
+  <div class="col s12" id="reloj">
+    <h4><span id="minutos">Esperando</span> : <span id="segundos">Coach</span></h4>
   </div>
 </div>
 <div class="row">
@@ -742,6 +767,25 @@ rutas.setsala = function(vecUrl){
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
     
+    function tictoc(){
+        segundos--;
+        if(segundos === -1){
+            minutos--;
+            segundos = 59;
+        }
+        if (minutos === -1){
+            minutos = 0;
+            soundAlert.play();
+            M.toast({html: "La reunión está por cerrarse"});
+            setTimeout(function(){
+                clearInterval(reloj);
+                window.location.href = "#menu";
+            },58000);
+        }
+        document.getElementById("minutos").innerText = minutos;
+        document.getElementById("segundos").innerText = segundos;
+    }
+    
     datosAmigo(coach,imprimirPersona);
     function imprimirPersona(datos){
         document.getElementById("displayName").innerHTML = datos.displayName;
@@ -749,7 +793,6 @@ rutas.setsala = function(vecUrl){
     }
     
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-        navigator.mediaDevices.getUserMedia({video: false, audio: true}).then((stream) => {localStream = stream});
     } else {
         soundAlert.play();
         M.toast({
@@ -758,7 +801,6 @@ rutas.setsala = function(vecUrl){
         });
         return;
     }
-    
     
     if (tipo === "directa"){
         refDoc = db.collection("directa").doc(parametros.misdatos.email).collection("invitador").doc(coach);
@@ -806,9 +848,13 @@ rutas.setsala = function(vecUrl){
     function imprimirMensaje(mensaje){
         soundAlert.play();
         document.getElementById("mensaje").innerHTML = mensaje;
+        if(reloj === null && mensaje !== ""){
+            reloj = setInterval(tictoc,1000);
+        }
     }
     
     async function createRoom() {
+        navigator.mediaDevices.getUserMedia({video: false, audio: true}).then((stream) => {localStream = stream});
         const configuration = {
             iceServers: [{
                 urls: [
@@ -820,11 +866,6 @@ rutas.setsala = function(vecUrl){
         };
         roomRef = await db.collection('rooms').doc();
         peerConnection = new RTCPeerConnection(configuration);
-        peerConnection.onconnectionstatechange= function(evento){
-            if (peerConnection.connectionState == "connected"){
-                //?????????????
-            }
-        };
 
         localStream.getTracks().forEach(track => {
             peerConnection.addTrack(track, localStream);
@@ -865,7 +906,6 @@ rutas.setsala = function(vecUrl){
               imprimirMensaje(data.mensaje);
             }
         });
-
         escuchadores.push(escuchador);
         // Listening for remote session description above
     
@@ -892,17 +932,24 @@ rutas.sala = function(vecUrl){
     var roomId = vecUrl[1];
     var roomRef, roomSnapshot, peerConnection;
     var db = firebase.firestore();
+    var minutos = 45;
+    var segundos = 0;
     
     var strHtml;
     {strHtml = `
 <video id="remoteVideo" autoplay playsinline style="display:none"></video>
 <div class="row">
-  <div class="col s4">
+  <div class="col s12 m6">
     <img class="responsive-img" src="" id="photoURL">
   </div>
-  <div class="col s8">
+  <div class="col s12 m6">
     <p id="displayName"></p>
     <p id="correo"></p>
+  </div>
+</div>
+<div class="row">
+  <div class="col s12" id="reloj">
+    <h4><span id="minutos">45</span>:<span id="segundos">0</span></h4>
   </div>
 </div>
 <div class="row">
@@ -933,6 +980,25 @@ rutas.sala = function(vecUrl){
     document.getElementById("contenedor").innerHTML = strHtml;
     soundAlert.play();
     strHtml = null;
+    
+    var reloj = setInterval(function(){
+        segundos--;
+        if(segundos === -1){
+            minutos--;
+            segundos = 59;
+        }
+        if (minutos === -1){
+            minutos = 0;
+            soundAlert.play();
+            M.toast({html: "La reunión está por cerrarse"});
+            setTimeout(function(){
+                clearInterval(reloj);
+                window.location.href = "#menu";
+            },58000);
+        }
+        document.getElementById("minutos").innerText = minutos;
+        document.getElementById("segundos").innerText = segundos;
+    },1000);
     
     document.getElementById("tab-elogios").onclick = function(){
         document.getElementById("elogios").style.display = "block";

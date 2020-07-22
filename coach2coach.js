@@ -821,7 +821,10 @@ rutas.setsala = function(vecUrl){
                     completeCallback: function(){window.location.href="#menu";},
                 });
             } else {
-                createRoom();
+                navigator.mediaDevices.getUserMedia({video: false, audio: true}).then((stream) => {
+                    localStream = stream;
+                    createRoom();
+                });
             }
         } else {
             soundAlert.play();
@@ -858,7 +861,6 @@ rutas.setsala = function(vecUrl){
     }
     
     async function createRoom() {
-        navigator.mediaDevices.getUserMedia({video: false, audio: true}).then((stream) => {localStream = stream});
         const configuration = {
             iceServers: [{
                 urls: [

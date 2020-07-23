@@ -1068,7 +1068,7 @@ rutas.sala = function(vecUrl){
         let strHtml = "";
         let color;
         for (let i=0;i<lngHij;i++){
-            if (hijo[i].sub && hijo[i].sub.length > 0){
+            if (hijo[i].sub){
                 color = "orange";
             } else {
                 color = "green";
@@ -1098,7 +1098,7 @@ rutas.sala = function(vecUrl){
             destino = destino.parentElement;
         }
         let i = parseInt(destino.id,10);
-        if (hijo[i].sub && hijo[i].sub.length > 0){
+        if (hijo[i].sub){
             path.push(i);
             imprimirTronco();
         } else {
@@ -1521,6 +1521,9 @@ rutas.directorio = function(){
         let strHtml = `<a id= "home" class="waves-effect waves-light btn orange">Home</a>`;
         for (let i=0;i<lng;i++){
             strHtml += ` <a id="${i}" class="waves-effect waves-light btn orange">${hijo[path[i]].label}</a>`;
+            if (!hijo[path[i]].sub){
+                hijo[path[i]].sub = [];
+            }
             hijo = hijo[path[i]].sub;
         }
         document.getElementById("directorio").innerHTML = strHtml;
@@ -1532,23 +1535,26 @@ rutas.directorio = function(){
         let strHtml = "";
         let color,borrar;
         for (let i=0;i<lngHij;i++){
-            if (hijo[i].sub.length > 0){
+            if (hijo[i].sub && hijo[i].sub.length > 0){
                 color = "orange";
                 borrar = "";
             } else {
                 color = "green";
                 borrar = `<i id ="borrar-${i}" class="material-icons right orange-text">delete</i>`;
             }
-            color = (hijo[i].sub.length > 0) ? "orange" : "green";
-
             strHtml += `<li id="${i}" class="collection-item ${color} lighten-4">${hijo[i].label} ${borrar}</li>`;
         }
         document.getElementById("items").innerHTML = strHtml;
     }
     
     function exportarJSON(){
-        var strng = JSON.stringify(directorioBeta);
-        document.getElementById("texto").innerText = strng;
+        var stra = JSON.stringify(directorioBeta);
+        var strb;
+        do{
+            strb = stra.slice();
+            stra = strb.replace(',"sub":[]','');
+        } while(stra != strb);
+        document.getElementById("texto").innerText = stra;
         M.textareaAutoResize(document.getElementById("texto"));
     }
     
@@ -1575,7 +1581,7 @@ rutas.directorio = function(){
         if(id.indexOf("borrar")>=0){
             id = id.replace("borrar-","");
             i = parseInt(id,10);
-            if (hijo[i].sub.length > 0){
+            if (hijo[i].sub && hijo[i].sub.length>0){
                 return;
             } else {
                 hijo.splice(i,1);
@@ -1615,5 +1621,5 @@ rutas.directorio = function(){
     document.getElementById("texto").innerText = strng;
     M.textareaAutoResize(document.getElementById("texto"));
     actualizar();
-    strng = null
+    strng = null;
 };

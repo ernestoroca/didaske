@@ -727,7 +727,7 @@ rutas.coachee = function(){
 
 //------------------------------------------------------------------------------------------------------------
 
-rutas.setsala = function(vecUrl){
+rutas.setsala = function(vecUrl){//coachee
     var coach = vecUrl[1];
     var tipo = vecUrl[2];
     var minutos = 45;
@@ -737,6 +737,7 @@ rutas.setsala = function(vecUrl){
     var strHtml, roomRef,refDoc;
     var db = parametros.db;
     {strHtml= `
+<video id="remoteVideo" autoplay playsinline style="display:none"></video>
 <div class="row">
   <div class="col s12">
     <img class="responsive-img" src="" id="photoURL">
@@ -839,6 +840,9 @@ rutas.setsala = function(vecUrl){
         });
     });
     
+    remoteStream = new MediaStream();
+    document.getElementById('remoteVideo').srcObject = remoteStream;
+    
     function informarSala(salaid){
         refDoc.update({
             sala: salaid
@@ -897,6 +901,14 @@ rutas.setsala = function(vecUrl){
         };
         await roomRef.set(roomWithOffer);
         // Code for creating a room above
+        
+        // Code remoteStream below
+        peerConnection.addEventListener('track', event => {
+            event.streams[0].getTracks().forEach(track => {
+                remoteStream.addTrack(track);
+            });
+        });
+        // Code remoteStream above
     
         // Listening for remote session description below
         var escuchador = roomRef.onSnapshot(async snapshot => {
@@ -931,7 +943,7 @@ rutas.setsala = function(vecUrl){
 
 //------------------------------------------------------------------------------------------------------------
 
-rutas.sala = function(vecUrl){
+rutas.sala = function(vecUrl){//coach
     var roomId = vecUrl[1];
     var roomRef, roomSnapshot, peerConnection;
     var db = firebase.firestore();
@@ -1131,6 +1143,11 @@ rutas.sala = function(vecUrl){
         if (roomSnapshot.exists) {
             peerConnection = new RTCPeerConnection(configuration);
             
+            localStream = await navigator.mediaDevices.getUserMedia({video: false, audio: true});
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
             // Code for collecting ICE candidates below
             const calleeCandidatesCollection = roomRef.collection('calleeCandidates');
             peerConnection.addEventListener('icecandidate', event => {
@@ -1185,6 +1202,7 @@ rutas.sala = function(vecUrl){
             });
         }
     }
+    
     joinRoomById();
     pintarElogios();
     imprimirTronco();
@@ -1355,7 +1373,6 @@ rutas.xxx = function(){
                     // Create Chat channel above
                 }
             };
-    
             
             localStream.getTracks().forEach(track => {
                 peerConnection.addTrack(track, localStream);

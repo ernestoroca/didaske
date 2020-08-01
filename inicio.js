@@ -211,7 +211,7 @@ rutas.amigos = function(){
         }
         if (id.includes("solicitud-")){
             correoSolicitud = id.replace("solicitud-","");
-            M.Modal.getInstance("modal2").open();
+            M.Modal.getInstance(document.getElementById("modal2")).open();
         }
     };
     function getSolicitudes(){
@@ -292,7 +292,7 @@ rutas.amigos = function(){
         }
         if (id.includes("borrar-")){
             correoBorrar = id.replace("borrar-","");
-            M.Modal.getInstance("modal1").open();
+            M.Modal.getInstance(document.getElementById("modal1")).open();
         }
     };
     function getAmistades(){
@@ -470,6 +470,7 @@ function reload(){
     var vecUrl = url.split('/');
     if (vecUrl.length===0 || (vecUrl.length===1 && vecUrl[0]==="")){
         window.location.href="#inicio";
+        rutas.inicio();
     } else {
         rutas[vecUrl[0].replace("#","")](vecUrl);
     }
@@ -480,12 +481,14 @@ function authinit(){
         if(usuario) {
             getMisDatos(usuario);
             window.location.href="#menu";
+            reload();
         }
     });
     firebase.auth().getRedirectResult().then(result => {
         if (result && result.user){
             getMisDatos(result.user);
             window.location.href="#menu";
+            reload();
         }
     }).catch(err => {
         console.log(err);

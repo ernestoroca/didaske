@@ -63,17 +63,21 @@ rutas.menu = function(){
     {strHtml = `
 <br>
 <div class="row">
-  <div class="col s6 m4 l3 z-depth-1 center">
-    <a href="/coach2coach.html" class="waves-effect waves-light">
-      <img class="responsive-img" src="/img/coach2coach.jpg">
-      <h5>Coach</h5>
-    </a>
+  <div class="col s6 m4 l3 z-depth-1 center redondeado">
+    <div class="card" onclick="window.location.href='/coach2coach.html'">
+      <div class="card-image">
+        <img class="responsive-img" src="/img/coach2coach.jpg">
+        <span class="card-title">Coaching</span>
+      </div>
+    </div>
   </div>
   <div class="col s6 m4 l3 z-depth-1 center">
-    <a href="/accountpartner.html" class="waves-effect waves-light">
-      <img class="responsive-img" src="/img/accountpartner.jpg">
-      <h5>Compañero</h5>
-    </a>
+    <div class="card" onclick="window.location.href='/accountpartner.html'">
+      <div class="card-image">
+        <img class="responsive-img" src="/img/accountpartner.jpg">
+        <span class="card-title">Accountability</span>
+      </div>
+    </div>
   </div>
 </div>
 <div class="row redondeado orange" onclick="window.location.href='#amigos'">

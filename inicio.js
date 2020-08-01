@@ -63,24 +63,24 @@ rutas.menu = function(){
     {strHtml = `
 <br>
 <div class="row">
-  <div class="col s6 m4 l3 z-depth-1 center redondeado">
-    <div class="card" onclick="window.location.href='/coach2coach.html'">
+  <div class="col s6 m4 l3">
+    <div class="card z-depth-3" onclick="window.location.href='/coach2coach.html'">
       <div class="card-image">
         <img class="responsive-img" src="/img/coach2coach.jpg">
-        <span class="card-title">Coaching</span>
+        <span class="card-title truncate">Coaching</span>
       </div>
     </div>
   </div>
-  <div class="col s6 m4 l3 z-depth-1 center">
-    <div class="card" onclick="window.location.href='/accountpartner.html'">
+  <div class="col s6 m4 l3">
+    <div class="card z-depth-3" onclick="window.location.href='/accountpartner.html'">
       <div class="card-image">
         <img class="responsive-img" src="/img/accountpartner.jpg">
-        <span class="card-title">Accountability</span>
+        <span class="card-title truncate">Accountability</span>
       </div>
     </div>
   </div>
 </div>
-<div class="row redondeado orange" onclick="window.location.href='#amigos'">
+<div class="row redondeado orange valign-wrapper white-text" onclick="window.location.href='#amigos'">
   <div class="col s3">
     <span class="material-icons">groups</span>
   </div>
@@ -90,6 +90,7 @@ rutas.menu = function(){
 </div>
     `;}
     document.getElementById("contenedor").innerHTML = strHtml;
+    document.getElementById("menutitulo").href = "#menu";
 };
 
 //----------------------------------------------------------------------
@@ -110,11 +111,7 @@ rutas.amigos = function(){
           <i class="material-icons">how_to_reg</i>
           <b>Solicitudes</b>
         </div>
-        <div class="collapsible-body">
-          <table class="striped">
-            <tbody id="solicitudes">
-            </tbody>
-          </table>
+        <div class="collapsible-body" id="solicitudes">
         </div>
       </li>
       <li>
@@ -122,11 +119,7 @@ rutas.amigos = function(){
           <i class="material-icons">groups</i>
           <b>Mis amistades</b>
         </div>
-        <div class="collapsible-body">
-          <table>
-            <tbody id="amistades">
-            </tbody>
-          </table>
+        <div class="collapsible-body" id="amistades">
         </div>
       </li>
       <li>
@@ -232,21 +225,24 @@ rutas.amigos = function(){
                 return;
             }
             datosAmigo.then(datos => {
-                var tr = document.createElement("TR");
+                var div = document.createElement("DIV");
+                div.style.overflowX="auto";
+                div.style.whiteSpace= "nowrap";
+                div.classList.add("row","orange","lighten-4","redondeado");
+                div.id = "solicitud-" + datos.correo;
                 var strHtml;
                 {strHtml = `
-<tr id="solicitud-${datos.correo}">
-  <td class="s3">
-    <img src="${datos.photoURL}" alt="" class="circle">
-  </td>
-  <td class="s9">
-    ${datos.displayName}<br>
-    ${datos.correo}
-  </td>
-</tr>
+<br>
+<div class="col s3">
+  <img src="${datos.photoURL}" alt="" class="circle responsive-img">
+</div>
+<div class="col s9">
+  ${datos.displayName}<br>
+  ${datos.correo}<br><br>
+</div>
                 `;}
-                tr.innerHTML = strHtml;
-                document.getElementById("solicitudes").appendChild(tr);
+                div.innerHTML = strHtml;
+                document.getElementById("solicitudes").appendChild(div);
             }).catch(err => {
                 console.log(err);
             });
@@ -326,21 +322,24 @@ rutas.amigos = function(){
         }
     }
     function imprimirAmigo(datos){
-        var tr = document.createElement("TR");
+        var div = document.createElement("DIV");
+        div.style.overflowX="auto";
+        div.style.whiteSpace= "nowrap";
+        div.classList.add("row","orange","lighten-4","redondeado");
+        div.id = "borrar-" + datos.correo;
         var strHtml;
         {strHtml = `
-<tr id="borrar-${datos.correo}">
-  <td class="s3">
-    <img src="${datos.photoURL}" alt="" class="circle">
-  </td>
-  <td class="s9">
-    ${datos.displayName}<br>
-    ${datos.correo}
-  </td>
-</tr>
+<br>
+<div class="col s3">
+  <img src="${datos.photoURL}" alt="" class="circle responsive-img">
+</div>
+<div class="col s9">
+  ${datos.displayName}<br>
+  ${datos.correo}<br><br>
+</div>
         `;}
-        tr.innerHTML = strHtml;
-        document.getElementById("amistades").appendChild(tr);
+        div.innerHTML = strHtml;
+        document.getElementById("amistades").appendChild(div);
     }
     getAmistades();
     

@@ -11,6 +11,13 @@
     -ms-user-select: none;
     user-select: none;
 }
+.redondeado {
+  border-radius: 10px;
+}
+.google {
+  border-radius: 10px;
+  border: 1px solid red;
+}
 input {
     autocomplete: "off";
 }
@@ -21,7 +28,7 @@ input {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <!--link rel="manifest" href="/manifest.json"-->
-    <!-- configuracion para apple --> 
+    <!-- configuracion para apple -->
     <!--meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Tutor Online">
@@ -41,7 +48,9 @@ input {
     <!-- librerias firebase -->
     <script defer src="/__/firebase/7.14.6/firebase-app.js"></script>
     <script defer src="/__/firebase/7.14.6/firebase-auth.js"></script>
+    <script defer src="/__/firebase/7.14.6/firebase-firestore.js"></script>
     <script defer src="/__/firebase/init.js"></script>
+    <script defer src="inicio.js"></script>
   </head>
   <body class="yellow lighten-5">
     <div class="navbar-fixed">
@@ -52,91 +61,6 @@ input {
       </nav>
     </div>
     <div class="container" id="contenedor">
-      <br>
-      <div class="row">
-        <div class="col s12 offset-l2 l8">
-          <div class="carousel carousel-slider center" id="carousel">
-            <div class="carousel-item">
-              <img src="/img/carousel1.jpg" class="responsive-img">
-            </div>
-            <div class="carousel-item">
-              <img src="/img/carousel2.jpg" class="responsive-img">
-            </div>
-            <div class="carousel-item">
-              <img src="/img/carousel3.jpg" class="responsive-img">
-            </div>
-            <div class="carousel-item">
-              <img src="/img/carousel4.jpg" class="responsive-img">
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="google" class="row white valign-wrapper center z-depth-2" style="border-radius: 10px;border: 1px solid red">
-        <div class="col s2 valign-wrapper">
-          <img src="/img/google.png" class="responsive-img">
-        </div>
-        <div class="col s10 black-text valign-wrapper">
-          <h5>Ingrese con google</h5>
-        </div>
-      </div>
     </div>
-    <script>
-function authinit(){
-  firebase.auth().onAuthStateChanged(usuario => {
-    if(usuario) {
-      showMenu();
-    }
-  });
-  firebase.auth().getRedirectResult().then(result => {
-    if (result && result.user){
-      showMenu();
-    }
-  }).catch(err => {
-    console.log(err);
-  });
-}
-
-function showMenu(){
-    var strHtml = `
-<br>
-<div class="row">
-  <div class="col s6 m4 l3 z-depth-1 center">
-    <a href="/coach2coach.html" class="waves-effect waves-light">
-      <img class="responsive-img" src="/img/coach2coach.jpg">
-      <h5>Coach</h5>
-    </a>
-    
-  </div>
-  <div class="col s6 m4 l3 z-depth-1 center">
-    <a href="/accountpartner.html" class="waves-effect waves-light">
-      <img class="responsive-img" src="/img/accountpartner.jpg">
-      <h5>Compañero</h5>
-    </a>
-  </div>
-</div>
-    `;
-    document.getElementById("contenedor").innerHTML = strHtml;
-}
-window.onload = function(){
-  M.Carousel.init(document.querySelectorAll('.carousel'),{
-    fullWidth: true,
-    indicators: true,
-  });
-  var elCarousel = M.Carousel.getInstance(document.getElementById("carousel"));
-  setTimeout(cambiarCarousel,5000);
-  function cambiarCarousel(){
-    if (document.getElementById("carousel")){
-      elCarousel.next();
-      setTimeout(cambiarCarousel,5000);
-    }
-  }
-  document.getElementById('google').onclick = function(){
-    localStorage.clear();
-    var provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithRedirect(provider);
-  };
-  authinit();
-};
-    </script>
   </body>
 </html>
